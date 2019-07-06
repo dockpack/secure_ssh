@@ -1,0 +1,322 @@
+---
+# tasks file for secure_ssh
+
+- name: ensure packages are installed
+  package:
+    name:
+      - fail2ban
+      - authconfig
+    state: present
+
+- name: enable fail2ban
+  systemd:
+    name: fail2ban
+    enabled: yes
+    state: started
+
+- name: Harden SSH configuration
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - regexp: '^(#)?AddressFamily'
+      line: "AddressFamily {{ AddressFamily }}"
+    - regexp: '^(#)?PubkeyAuthentication'
+      line: "PubkeyAuthentication {{ PubkeyAuthentication }}"
+    - regexp: '^ChallengeResponseAuthentication'
+      line: "ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}"
+    - regexp: '^(#)?TrustedUserCAKeys'
+      line: "TrustedUserCAKeys {{ TrustedUserCAKeys }}"
+    - regexp: '^UsePAM'
+      line: 'UsePAM yes'
+    - regexp: '^(#)?Port'
+      line: "Port {{ Port }}"
+    - regexp: '^(#)?AuthorizedKeysFile'
+      line: "AuthorizedKeysFile {{ AuthorizedKeysFile }}"
+    - regexp: '^(#)?PasswordAuthentication'
+      line: "PasswordAuthentication {{ PasswordAuthentication }}"
+    - regexp: '^(#)?PermitEmptyPasswords'
+      line: "PermitEmptyPasswords {{ PermitEmptyPasswords }}"
+    - regexp: '^(#)?X11Forwarding'
+      line: "X11Forwarding {{ X11Forwarding }}"
+    - regexp: '^(#)?PermitRootLogin'
+      line: "PermitRootLogin {{ PermitRootLogin }}"
+    - regexp: '^(#)?MaxAuthTries \d'
+      line: "MaxAuthTries {{ MaxAuthTries | default('10') }}"
+    - regexp: '^(#)?MaxSessions'
+      line: "MaxSessions {{ MaxSessions }}"
+    - regexp: '^(#)?IgnoreRhosts'
+      line: 'IgnoreRhosts yes'
+    - regexp: '^(#)?StrictModes'
+      line: 'StrictModes yes'
+    - regexp: '^(#)?HostbasedAuthentication'
+      line: "HostbasedAuthentication no"
+    - regexp: '^(#)?PermitUserEnvironment'
+      line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
+    - regexp: '^(#)?Ciphers'
+      line: 'Ciphers aes256-ctr,aes192-ctr,aes128-ctr'
+    - regexp: '^(#)?MACs'
+      line: 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com'
+    - regexp: '^(#)?LoginGraceTime'
+      line: "LoginGraceTime {{ LoginGraceTime }}"
+  notify: restart sshd
+  tags:
+    - config
+
+- name: create central directory for authorized_keys
+  file:
+    dest: /etc/ssh/authorized_keys
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - migrate
+    - joiners
+    - leavers
+
+- name: unlock central authorized_keys files for writing
+  shell: chattr -i /etc/ssh/authorized_keys/*
+  changed_when: no # it is a toggle
+  ignore_errors: yes
+  tags:
+    - migrate
+    - joiners
+    - leavers
+
+- name: ensure all keys of non_users are removed
+  file:
+    dest: "/etc/ssh/authorized_keys/{{ item }}"
+    state: absent
+  with_items:
+    - "{{ non_users }}"
+  tags:
+    - leavers
+
+- name: ensure all non_users are removed
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: yes
+    force: yes
+  with_items:
+    - "{{ non_users }}"
+  tags:
+    - leavers
+
+- name: create sudoers.d file
+  copy:
+    src: 'sudoers/users_sudo'
+    dest: /etc/sudoers.d/users_sudo
+    owner: root
+    group: root
+    mode: "0440"
+  tags:
+    - sudo
+
+- name: disable requiretty
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults.*requiretty'
+    line: Defaults    !requiretty
+    state: present
+  tags:
+    - requiretty
+
+- name: create .ssh in user skeleton
+  file:
+    path: /etc/skel/.ssh
+    mode: 0700
+    state: directory
+  tags:
+    - config
+
+- name: verify if ssh config exists in user skeleton
+  stat:
+      path: "/etc/skel/.ssh/config"
+  register: user_config
+  tags:
+    - config
+
+- name: create ssh config in user skeleton
+  file:
+    path: /etc/skel/.ssh/config
+    owner: root
+    group: root
+    mode: 0600
+    state: "{{ 'file' if  user_config.stat.exists else 'touch'}}"
+  tags:
+    - config
+
+- name: enable ForwardAgent in /etc/skel/.ssh/config file
+  lineinfile:
+    dest: /etc/skel/.ssh/config
+    regexp: '^ForwardAgent'
+    line: 'ForwardAgent yes'
+    state: present
+  tags:
+    - config
+
+- name: create groups for wheel, staff and users
+  group:
+    system: yes
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - wheel
+    - staff
+    - users
+  tags:
+    - groups
+
+- name: ensure the people in ssh_users have an account
+  user:
+    name: "{{ item.username }}"
+    uid: "{{ item.uid | default(omit) }}"
+    seuser: "{{ item.seuser | default('user_u') }}"
+    non_unique: yes # for cleaning up inconsistent uids
+    shell: "{{ item.shell }}"
+    state: present
+  with_items:
+    - "{{ ssh_users }}"
+  tags:
+    - joiners
+
+- name: set the primary group for users
+  user:
+    name: "{{ item.username }}"
+    group: "{{ item.group | default('users') }}"
+  with_items: "{{ ssh_users }}"
+  tags:
+    - groups
+    - joiners
+
+- name: remove users from all groups except their primary group
+  user:
+    name: "{{ item.username }}"
+    group: "{{ item.group | default('users') }}"
+  with_items: "{{ ssh_users }}"
+  tags:
+  - groups
+  - joiners
+
+- name: remove user private groups
+  group:
+    name: "{{ item.username }}"
+    state: absent
+  with_items: "{{ ssh_users }}"
+  tags:
+    - leavers
+    - groups
+    - joiners
+
+- name: root manages authorized keys for each user
+  copy:
+    dest: /etc/ssh/authorized_keys/{{ item.username }}
+    src: "pubkeys/{{ item.username }}"
+    owner: "{{ item.username }}"
+    mode: 0640
+  when: item.group == 'wheel' or item.group == 'staff' or item.group == 'users'
+  ignore_errors: yes
+  with_items:
+    - "{{ ssh_users }}"
+  tags:
+    - joiners
+
+- name: lock central authorized_keys files for writing
+  shell: chattr +i /etc/ssh/authorized_keys/*
+  changed_when: no # it is a toggle
+  tags:
+    - joiners
+    - leavers
+    - migrate
+
+- name: enable HashKnownHosts in /etc/ssh/ssh_config file
+  lineinfile:
+    dest: /etc/ssh/ssh_config
+    regexp: '^HashKnownHosts'
+    line: 'HashKnownHosts yes'
+    state: present
+  tags:
+    - config
+
+- name: ensure users have no authorized_keys in their homedir
+  file:
+    state: absent
+    path: "{{ item }}/.ssh/authorized_keys"
+  with_items:
+    - "{{ ssh_users }}"
+  tags:
+    - joiners
+
+- name: ensure permissions on /etc/ssh/sshd_config are configured
+  file:
+      dest: /etc/ssh/sshd_config
+      state: file
+      owner: root
+      group: root
+      mode: 0600
+  notify: restart sshd
+
+- name: ensure password hashing algorithm is SHA-512
+  command: authconfig --passalgo=sha512 --update
+
+- name: Install dependencies
+  package:
+    name: unzip
+    state: present
+
+- name: download vault-ssh-helper from the internet
+  when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
+  get_url:
+    url: "{{ vault_helper_url }}"
+    sha256sum: "{{ vault_helper_sha256sum }}"
+    dest: "/tmp/{{ vault_helper_zip }}"
+  register: task_result
+  until: task_result is success
+  retries: 10
+  delay: 2
+
+- name: unpack vault-ssh-helper
+  when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
+  unarchive:
+    src: "/tmp/{{ vault_helper_zip }}"
+    dest: "/usr/bin"
+    creates: "/usr/bin/vault-ssh-helper"
+    copy: false
+
+- name: create directory for vault-ssh-helper
+  when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
+  file:
+    path: "/etc/vault-ssh-helper.d"
+    state: directory
+
+- name: copy vault-ssh-helper configuration file
+  when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
+  template:
+    src: config.hcl
+    dest: /etc/vault-ssh-helper.d/config.hcl
+
+- name: Comment common-auth mechanism
+  when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
+  lineinfile:
+    firstmatch: yes
+    path: "/etc/pam.d/sshd"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - { regexp: '^auth       substack     password-auth', line: '#auth       substack     password-auth' }
+    - { regexp: '^password   include      password-auth', line: '#password   include      password-auth' }
+
+- name: Insert the vault-ssh-helper configuration for ssh auth
+  when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
+  blockinfile:
+    path: "/etc/pam.d/sshd"
+    block: |
+      auth requisite pam_exec.so quiet expose_authtok log=/tmp/vaultssh.log /usr/bin/vault-ssh-helper -config=/etc/vault-ssh-helper.d/config.hcl
+      auth optional pam_unix.so not_set_pass use_first_pass nodelay
+    insertbefore: "auth       include      postlogin"
+    state: present
