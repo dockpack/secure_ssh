@@ -1,0 +1,20 @@
+---
+# handlers file for secure_ssh
+
+- name: restart sshd
+  debug:
+    msg: "checking sshd first"
+  changed_when: True
+  notify:
+    - check sshd configuration
+    - restart sshd - after config check
+
+- name: check sshd configuration
+  command: '/usr/sbin/sshd -t'
+  register: sshd_config
+  changed_when: "sshd_config.rc != 0"
+
+- name: restart sshd - after config check
+  service:
+    name: sshd
+    state: restarted
