@@ -1,0 +1,57 @@
+---
+
+# https://major.io/2013/07/05/confine-untrusted-users-including-your-children-with-selinux/
+# There are five main SELinux seuser values:
+#   guest_u: - no X windows, no sudo, and no networking
+#   xguest_u: - same as guest_u, but X and web connectivity is allowed
+#   user_u: - same as xguest_u, but networking isn’t restricted
+#   staff_u: - same as user_u, but sudo is allowed (su isn’t allowed)
+#   unconfined_u: - full access
+# add users do not delete users that left, comment the lines
+# staff and wheel users need an ssh pub key.
+ssh_users:
+- username: vagrant
+  shell: /bin/bash
+  group: wheel
+  seuser: staff_u
+
+# This dict should contain at least one entry
+non_users:
+- games
+- ftp
+
+# Users will not be able to modify their pubkey
+AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
+
+# Reduce brute-force attacks
+PasswordAuthentication: 'no'
+PubkeyAuthentication: 'yes'
+
+# Don't be stupid
+PermitEmptyPasswords: 'no'
+PermitRootLogin: 'no'
+X11Forwarding: 'no'
+
+# Recommended
+MaxAuthTries: 4
+StrictModes: 'yes'
+Port: 22
+MaxSessions: 10
+PermitUserEnvironment: 'no'
+LoginGraceTime: '60'
+
+# Skip IPv6
+AddressFamily: inet
+# For use with Hashicorp Vault
+hashicorp_vault_ssh: false
+ChallengeResponseAuthentication: 'yes'
+TrustedUserCAKeys: '/etc/ssh/trusted-user-ca-keys.pem'
+
+# if hashicorp_vault_ssh: true, then the below are relevant
+vault_helper_zip: vault-ssh-helper_0.1.4_linux_amd64.zip
+vault_helper_url: "https://releases.hashicorp.com/vault-ssh-helper/0.1.4/{{ vault_helper_zip }}"
+vault_helper_sha256sum: 156ce8250725e64a3e4dc51018a18813dd44d1f2a6c853976bc20e1625d631a1
+vault_addr: "{{ lookup('env','VAULT_ADDR') }}"
+ssh_mount_point: ssh
+tls_skip_verify: !!str true
+allowed_roles: "*"
