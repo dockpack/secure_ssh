@@ -3,8 +3,8 @@
 
 - name: restart sshd
   debug:
-    msg: "checking sshd first"
-  changed_when: True
+    msg: "checking /etc/ssh/sshd_config first"
+  changed_when: true
   notify:
     - check sshd configuration
     - restart sshd - after config check
