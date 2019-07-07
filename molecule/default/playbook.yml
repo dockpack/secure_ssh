@@ -16,9 +16,9 @@
         shell: /bin/bash
         group: wheel
         seuser: unconfined_u
-      - username: admin
+      - username: vola
         shell: /bin/bash
-        group: users
+        group: wheel
         seuser: staff_u
       - username: guest
         shell: /bin/bash
