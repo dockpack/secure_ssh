@@ -1,18 +1,24 @@
 ---
 # tasks file for secure_ssh
 
-- name: ensure packages are installed
+- name: ensure role dependencies are installed
   package:
     name:
       - fail2ban
       - authconfig
+      - policycoreutils-python
+      - unzip
     state: present
 
 - name: enable fail2ban
   systemd:
     name: fail2ban
-    enabled: yes
+    enabled: true
     state: started
+
+- name: ensure password hashing algorithm is SHA-512
+  command: authconfig --passalgo=sha512 --update
+  changed_when: false
 
 - name: Harden SSH configuration
   lineinfile:
@@ -26,7 +32,8 @@
     - regexp: '^(#)?PubkeyAuthentication'
       line: "PubkeyAuthentication {{ PubkeyAuthentication }}"
     - regexp: '^ChallengeResponseAuthentication'
-      line: "ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}"
+      line: |
+        ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
     - regexp: '^(#)?TrustedUserCAKeys'
       line: "TrustedUserCAKeys {{ TrustedUserCAKeys }}"
     - regexp: '^UsePAM'
@@ -58,12 +65,22 @@
     - regexp: '^(#)?Ciphers'
       line: 'Ciphers aes256-ctr,aes192-ctr,aes128-ctr'
     - regexp: '^(#)?MACs'
+      # yamllint disable-line rule:line-length
       line: 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com'
     - regexp: '^(#)?LoginGraceTime'
       line: "LoginGraceTime {{ LoginGraceTime }}"
   notify: restart sshd
   tags:
     - config
+
+- name: ensure permissions on /etc/ssh/sshd_config are restricted
+  file:
+    dest: /etc/ssh/sshd_config
+    state: file
+    owner: root
+    group: root
+    mode: 0400
+  notify: restart sshd
 
 - name: create central directory for authorized_keys
   file:
@@ -79,8 +96,8 @@
 
 - name: unlock central authorized_keys files for writing
   shell: chattr -i /etc/ssh/authorized_keys/*
-  changed_when: no # it is a toggle
-  ignore_errors: yes
+  changed_when: false  # it is a toggle
+  ignore_errors: true
   tags:
     - migrate
     - joiners
@@ -99,8 +116,8 @@
   user:
     name: "{{ item }}"
     state: absent
-    remove: yes
-    force: yes
+    remove: true
+    force: true
   with_items:
     - "{{ non_users }}"
   tags:
@@ -135,7 +152,7 @@
 
 - name: verify if ssh config exists in user skeleton
   stat:
-      path: "/etc/skel/.ssh/config"
+    path: "/etc/skel/.ssh/config"
   register: user_config
   tags:
     - config
@@ -161,7 +178,7 @@
 
 - name: create groups for wheel, staff and users
   group:
-    system: yes
+    system: true
     name: "{{ item }}"
     state: present
   with_items:
@@ -176,9 +193,16 @@
     name: "{{ item.username }}"
     uid: "{{ item.uid | default(omit) }}"
     seuser: "{{ item.seuser | default('user_u') }}"
-    non_unique: yes # for cleaning up inconsistent uids
+    non_unique: true  # for cleaning up inconsistent uids
     shell: "{{ item.shell }}"
     state: present
+  with_items:
+    - "{{ ssh_users }}"
+  tags:
+    - joiners
+
+- name: ensure the people in ssh_users have a seuser type
+  command: "semanage login -a -s {{ item.seuser | default('xguest_u') }} {{ item.username }}"
   with_items:
     - "{{ ssh_users }}"
   tags:
@@ -199,8 +223,8 @@
     group: "{{ item.group | default('users') }}"
   with_items: "{{ ssh_users }}"
   tags:
-  - groups
-  - joiners
+    - groups
+    - joiners
 
 - name: remove user private groups
   group:
@@ -219,7 +243,7 @@
     owner: "{{ item.username }}"
     mode: 0640
   when: item.group == 'wheel' or item.group == 'staff' or item.group == 'users'
-  ignore_errors: yes
+  ignore_errors: true
   with_items:
     - "{{ ssh_users }}"
   tags:
@@ -227,7 +251,7 @@
 
 - name: lock central authorized_keys files for writing
   shell: chattr +i /etc/ssh/authorized_keys/*
-  changed_when: no # it is a toggle
+  changed_when: false  # it is a toggle
   tags:
     - joiners
     - leavers
@@ -251,23 +275,7 @@
   tags:
     - joiners
 
-- name: ensure permissions on /etc/ssh/sshd_config are configured
-  file:
-      dest: /etc/ssh/sshd_config
-      state: file
-      owner: root
-      group: root
-      mode: 0600
-  notify: restart sshd
-
-- name: ensure password hashing algorithm is SHA-512
-  command: authconfig --passalgo=sha512 --update
-
-- name: Install dependencies
-  package:
-    name: unzip
-    state: present
-
+## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
   get_url:
@@ -302,14 +310,14 @@
 - name: Comment common-auth mechanism
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
   lineinfile:
-    firstmatch: yes
+    firstmatch: true
     path: "/etc/pam.d/sshd"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     state: present
   with_items:
-    - { regexp: '^auth       substack     password-auth', line: '#auth       substack     password-auth' }
-    - { regexp: '^password   include      password-auth', line: '#password   include      password-auth' }
+    - {regexp: '^auth       substack     password-auth', line: '#auth       substack     password-auth'}
+    - {regexp: '^password   include      password-auth', line: '#password   include      password-auth'}
 
 - name: Insert the vault-ssh-helper configuration for ssh auth
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
