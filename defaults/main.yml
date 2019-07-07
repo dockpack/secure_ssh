@@ -1,19 +1,35 @@
 ---
 
+# Allow Signed SSH keys, place your CA key in ansible/files
+signed_ssh_keys: true
+
+# Please read the tasks before enabling
+distribute_ssh_keys: false
+
+# Change from user private groups to 'ssh_groups:'
+manage_ssh_groups: false
+# The wheel group is used in files/sudoers/user_sudo
+ssh_groups:
+  with_items:
+    - wheel
+    - staff
+    - users
+    - games
+
+# Confine users to seuser classes
+# adds all in 'ssh_users:' removes all 'non_users:'
+manage_ssh_users: false
 # This dict should contain at least one entry
 non_users:
   - games
   - ftp
-
 # add users do not delete users that left, comment the lines
-# staff and wheel users need an ssh pub key.
+# staff, wheel and users groups need an ssh pub key.
 ssh_users:
   - username: vagrant
     shell: /bin/bash
     group: wheel
     seuser: staff_u
-
-# The wheel group is used in files/sudoers/user_sudo
 
 # https://major.io/2013/07/05/confine-untrusted-users-including-your-children-with-selinux/
 # https://danwalsh.livejournal.com/66587.html
@@ -32,13 +48,13 @@ MaxSessions: 10
 PermitUserEnvironment: 'no'
 LoginGraceTime: '60'
 
-# Only set to yes for use with Hashicorp Vault
+# Skip IPv6
+AddressFamily: inet
+
+# For use with Hashicorp Vault OTP
 hashicorp_vault_ssh: false
 # Only set ChallengeResponseAuthentication yes for use with Hashicorp Vault
 ChallengeResponseAuthentication: 'no'
-
-# Allow Signed SSH keys, place CA key yourself
-TrustedUserCAKeys: '/etc/ssh/trusted-user-ca-keys.pem'
 
 # if hashicorp_vault_ssh: true, then the below are relevant
 hashi_url: 'https://releases.hashicorp.com/'

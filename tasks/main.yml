@@ -9,16 +9,23 @@
       - policycoreutils-python
       - unzip
     state: present
+  tags:
+    - fail2ban
+    - authconfig
 
 - name: enable fail2ban
   systemd:
     name: fail2ban
     enabled: true
     state: started
+  tags:
+    - fail2ban
 
 - name: ensure password hashing algorithm is SHA-512
   command: authconfig --passalgo=sha512 --update
   changed_when: false
+  tags:
+    - authconfig
 
 - name: Harden SSH configuration
   lineinfile:
@@ -81,66 +88,8 @@
     group: root
     mode: 0400
   notify: restart sshd
-
-- name: create central directory for authorized_keys
-  file:
-    dest: /etc/ssh/authorized_keys
-    state: directory
-    owner: root
-    group: root
-    mode: 0755
   tags:
-    - migrate
-    - joiners
-    - leavers
-
-- name: unlock central authorized_keys files for writing
-  shell: chattr -i /etc/ssh/authorized_keys/*
-  changed_when: false  # it is a toggle
-  ignore_errors: true
-  tags:
-    - migrate
-    - joiners
-    - leavers
-
-- name: ensure all keys of non_users are removed
-  file:
-    dest: "/etc/ssh/authorized_keys/{{ item }}"
-    state: absent
-  with_items:
-    - "{{ non_users }}"
-  tags:
-    - leavers
-
-- name: ensure all non_users are removed
-  user:
-    name: "{{ item }}"
-    state: absent
-    remove: true
-    force: true
-  with_items:
-    - "{{ non_users }}"
-  tags:
-    - leavers
-
-- name: create sudoers.d file
-  copy:
-    src: 'sudoers/users_sudo'
-    dest: /etc/sudoers.d/users_sudo
-    owner: root
-    group: root
-    mode: "0440"
-  tags:
-    - sudo
-
-- name: disable requiretty
-  lineinfile:
-    path: /etc/sudoers
-    regexp: '^Defaults.*requiretty'
-    line: Defaults    !requiretty
-    state: present
-  tags:
-    - requiretty
+    - config
 
 - name: create .ssh in user skeleton
   file:
@@ -149,6 +98,7 @@
     state: directory
   tags:
     - config
+    - ssh_users
 
 - name: verify if ssh config exists in user skeleton
   stat:
@@ -156,6 +106,7 @@
   register: user_config
   tags:
     - config
+    - ssh_users
 
 - name: create ssh config in user skeleton
   file:
@@ -166,6 +117,7 @@
     state: "{{ 'file' if  user_config.stat.exists else 'touch'}}"
   tags:
     - config
+    - ssh_users
 
 - name: enable ForwardAgent in /etc/skel/.ssh/config file
   lineinfile:
@@ -175,20 +127,74 @@
     state: present
   tags:
     - config
+    - ssh_users
+
+- name: enable HashKnownHosts in /etc/ssh/ssh_config file
+  lineinfile:
+    dest: /etc/ssh/ssh_config
+    regexp: '^HashKnownHosts'
+    line: 'HashKnownHosts yes'
+    state: present
+  tags:
+    - config
+    - ssh_users
+
+- name: create central directory for authorized_keys
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  file:
+    dest: /etc/ssh/authorized_keys
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  tags:
+    - ssh_users
+    - non_users
+
+- name: unlock central authorized_keys files for writing
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  shell: chattr -i /etc/ssh/authorized_keys/*
+  changed_when: false  # it is a toggle
+  ignore_errors: true
+  tags:
+    - ssh_users
+    - non_users
+
+- name: ensure all keys of non_users are removed
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  file:
+    dest: "/etc/ssh/authorized_keys/{{ item }}"
+    state: absent
+  with_items:
+    - "{{ non_users }}"
+  tags:
+    - non_users
+
+- name: ensure all non_users are removed
+  when: manage_ssh_users is defined and manage_ssh_users|bool
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: true
+    force: true
+  with_items:
+    - "{{ non_users }}"
+  tags:
+    - non_users
 
 - name: create groups for wheel, staff and users
+  when: manage_ssh_groups is defined and manage_ssh_groups|bool
   group:
     system: true
     name: "{{ item }}"
     state: present
-  with_items:
-    - wheel
-    - staff
-    - users
+  with_items: "{{ ssh_groups }}"
   tags:
     - groups
 
 - name: ensure the people in ssh_users have an account
+  when:
+    - manage_ssh_users is defined and manage_ssh_users|bool
   user:
     name: "{{ item.username }}"
     uid: "{{ item.uid | default(omit) }}"
@@ -199,44 +205,49 @@
   with_items:
     - "{{ ssh_users }}"
   tags:
-    - joiners
+    - ssh_users
 
 - name: ensure the people in ssh_users have a seuser type
+  when: manage_ssh_users is defined and manage_ssh_users|bool
   command: "semanage login -a -s {{ item.seuser | default('xguest_u') }} {{ item.username }}"
   with_items:
     - "{{ ssh_users }}"
   tags:
-    - joiners
+    - ssh_users
 
 - name: set the primary group for users
+  when: manage_ssh_groups is defined and manage_ssh_groups|bool
   user:
     name: "{{ item.username }}"
     group: "{{ item.group | default('users') }}"
   with_items: "{{ ssh_users }}"
   tags:
     - groups
-    - joiners
+    - ssh_users
 
 - name: remove users from all groups except their primary group
+  when: manage_ssh_groups is defined and manage_ssh_groups|bool
   user:
     name: "{{ item.username }}"
     group: "{{ item.group | default('users') }}"
   with_items: "{{ ssh_users }}"
   tags:
     - groups
-    - joiners
+    - ssh_users
 
 - name: remove user private groups
+  when: manage_ssh_groups is defined and manage_ssh_groups|bool
   group:
     name: "{{ item.username }}"
     state: absent
   with_items: "{{ ssh_users }}"
   tags:
-    - leavers
+    - non_users
     - groups
-    - joiners
+    - ssh_users
 
 - name: root manages authorized keys for each user
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
   copy:
     dest: /etc/ssh/authorized_keys/{{ item.username }}
     src: "pubkeys/{{ item.username }}"
@@ -247,33 +258,55 @@
   with_items:
     - "{{ ssh_users }}"
   tags:
-    - joiners
+    - ssh_users
 
 - name: lock central authorized_keys files for writing
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
   shell: chattr +i /etc/ssh/authorized_keys/*
   changed_when: false  # it is a toggle
   tags:
-    - joiners
-    - leavers
-    - migrate
-
-- name: enable HashKnownHosts in /etc/ssh/ssh_config file
-  lineinfile:
-    dest: /etc/ssh/ssh_config
-    regexp: '^HashKnownHosts'
-    line: 'HashKnownHosts yes'
-    state: present
-  tags:
-    - config
+    - ssh_users
+    - non_users
 
 - name: ensure users have no authorized_keys in their homedir
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
   file:
     state: absent
     path: "{{ item }}/.ssh/authorized_keys"
   with_items:
     - "{{ ssh_users }}"
   tags:
-    - joiners
+    - ssh_users
+
+- name: create sudoers.d file
+  copy:
+    src: 'sudoers/users_sudo'
+    dest: /etc/sudoers.d/users_sudo
+    owner: root
+    group: root
+    mode: "0440"
+  tags:
+    - sudoers
+
+- name: disable requiretty in sudoers file
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults.*requiretty'
+    line: Defaults    !requiretty
+    state: present
+  tags:
+    - sudoers
+
+- name: install trusted-user-ca-keys.pem
+  when: signed_ssh_keys is defined and signed_ssh_keys|bool
+  file:
+    src: trusted-user-ca-keys.pem
+    dest: /etc/ssh/trusted-user-ca-keys.pem
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - signed_ssh_keys
 
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
