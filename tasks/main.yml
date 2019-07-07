@@ -215,7 +215,7 @@
     password_lock: "{{ item.password_lock | default('true') }}"
     home: "{{ item.home | default(omit) }}"
     expires: "{{ item.expires | default(omit) }}"
-    generate_ssh_key: "{{ item.generate_ssh_key | default('false'') }}"
+    generate_ssh_key: "{{ item.generate_ssh_key | default('false') }}"
     non_unique: true  # for cleaning up inconsistent uids
     shell: "{{ item.shell }}"
     state: present
@@ -274,6 +274,7 @@
     owner: "{{ item.username }}"
     mode: 0640
   ignore_errors: true
+  no_log: true
   with_items:
     - "{{ ssh_users }}"
   tags:
