@@ -1,0 +1,22 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: vagrant
+  provider:
+    name: virtualbox
+  ssh_connection_options:
+    - '-o IdentityFile=~/.vagrant.d/insecure_private_key'
+lint:
+  name: yamllint
+platforms:
+  - name: centos
+    box: centos/7
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+verifier:
+  name: goss
+  lint:
+    name: yamllint
