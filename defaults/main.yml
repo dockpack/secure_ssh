@@ -29,7 +29,7 @@ ssh_users:
   - username: vagrant
     shell: /bin/bash
     group: wheel
-    seuser: staff_u
+    seuser: unconfined_u
 
 # https://major.io/2013/07/05/confine-untrusted-users-including-your-children-with-selinux/
 # https://danwalsh.livejournal.com/66587.html
@@ -41,6 +41,7 @@ ssh_users:
 #   unconfined_u: - full access
 
 # Recommended
+PasswordAuthentication: 'no'
 MaxAuthTries: 4
 StrictModes: 'yes'
 Port: 22
