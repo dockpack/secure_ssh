@@ -27,6 +27,25 @@
   tags:
     - authconfig
 
+- name: create sudoers.d file
+  copy:
+    src: 'sudoers/users_sudo'
+    dest: /etc/sudoers.d/users_sudo
+    owner: root
+    group: root
+    mode: "0440"
+  tags:
+    - sudoers
+
+- name: disable requiretty in sudoers file
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^Defaults.*requiretty'
+    line: Defaults    !requiretty
+    state: present
+  tags:
+    - sudoers
+
 - name: Harden SSH configuration
   lineinfile:
     dest: /etc/ssh/sshd_config
@@ -182,7 +201,7 @@
   tags:
     - non_users
 
-- name: create groups for wheel, staff and users
+- name: create ssh_groups like wheel, staff and users
   when: manage_ssh_groups is defined and manage_ssh_groups|bool
   group:
     system: true
@@ -190,7 +209,7 @@
     state: present
   with_items: "{{ ssh_groups }}"
   tags:
-    - groups
+    - ssh_groups
 
 - name: ensure the people in ssh_users have an account
   when:
@@ -210,8 +229,7 @@
 - name: ensure the people in ssh_users have a seuser type
   when: manage_ssh_users is defined and manage_ssh_users|bool
   command: "semanage login -a -s {{ item.seuser | default('xguest_u') }} {{ item.username }}"
-  with_items:
-    - "{{ ssh_users }}"
+  with_items: "{{ ssh_users }}"
   tags:
     - ssh_users
 
@@ -220,9 +238,10 @@
   user:
     name: "{{ item.username }}"
     group: "{{ item.group | default('users') }}"
-  with_items: "{{ ssh_users }}"
+  with_items:
+    - "{{ ssh_users }}"
   tags:
-    - groups
+    - ssh_groups
     - ssh_users
 
 - name: remove users from all groups except their primary group
@@ -232,7 +251,7 @@
     group: "{{ item.group | default('users') }}"
   with_items: "{{ ssh_users }}"
   tags:
-    - groups
+    - ssh_groups
     - ssh_users
 
 - name: remove user private groups
@@ -243,17 +262,18 @@
   with_items: "{{ ssh_users }}"
   tags:
     - non_users
-    - groups
+    - ssh_groups
     - ssh_users
 
 - name: root manages authorized keys for each user
-  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  when:
+    - distribute_ssh_keys is defined and distribute_ssh_keys|bool
+    - item.group == 'wheel' or item.group == 'staff' or item.group == 'users'
   copy:
     dest: /etc/ssh/authorized_keys/{{ item.username }}
     src: "pubkeys/{{ item.username }}"
     owner: "{{ item.username }}"
     mode: 0640
-  when: item.group == 'wheel' or item.group == 'staff' or item.group == 'users'
   ignore_errors: true
   with_items:
     - "{{ ssh_users }}"
@@ -264,6 +284,7 @@
   when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
   shell: chattr +i /etc/ssh/authorized_keys/*
   changed_when: false  # it is a toggle
+  ignore_errors: true
   tags:
     - ssh_users
     - non_users
@@ -278,28 +299,9 @@
   tags:
     - ssh_users
 
-- name: create sudoers.d file
-  copy:
-    src: 'sudoers/users_sudo'
-    dest: /etc/sudoers.d/users_sudo
-    owner: root
-    group: root
-    mode: "0440"
-  tags:
-    - sudoers
-
-- name: disable requiretty in sudoers file
-  lineinfile:
-    path: /etc/sudoers
-    regexp: '^Defaults.*requiretty'
-    line: Defaults    !requiretty
-    state: present
-  tags:
-    - sudoers
-
 - name: install trusted-user-ca-keys.pem
   when: signed_ssh_keys is defined and signed_ssh_keys|bool
-  file:
+  copy:
     src: trusted-user-ca-keys.pem
     dest: /etc/ssh/trusted-user-ca-keys.pem
     owner: root

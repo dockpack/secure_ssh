@@ -4,14 +4,22 @@
   become: true
   vars:
     signed_ssh_keys: true
+    PasswordAuthentication: 'yes'
     # Please read the tasks before enabling
     distribute_ssh_keys: true
     # Change from user private groups to 'ssh_groups:'
     manage_ssh_groups: true
     # Confine users to seuser classes
-    # adds all in 'ssh_users:' removes all 'non_users:'
     manage_ssh_users: true
     ssh_users:
+      - username: vagrant
+        shell: /bin/bash
+        group: wheel
+        seuser: unconfined_u
+      - username: admin
+        shell: /bin/bash
+        group: users
+        seuser: staff_u
       - username: guest
         shell: /bin/bash
         group: games
