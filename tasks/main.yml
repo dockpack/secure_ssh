@@ -46,6 +46,18 @@
   tags:
     - sudoers
 
+- name: install trusted-user-ca-keys.pem
+  when: signed_ssh_keys is defined and signed_ssh_keys|bool
+  copy:
+    src: trusted-user-ca-keys.pem
+    dest: /etc/ssh/trusted-user-ca-keys.pem
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart sshd
+  tags:
+    - signed_ssh_keys
+
 - name: Harden SSH configuration
   lineinfile:
     dest: /etc/ssh/sshd_config
@@ -179,28 +191,6 @@
     - ssh_users
     - non_users
 
-- name: ensure all keys of non_users are removed
-  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
-  file:
-    dest: "/etc/ssh/authorized_keys/{{ item }}"
-    state: absent
-  with_items:
-    - "{{ non_users }}"
-  tags:
-    - non_users
-
-- name: ensure all non_users are removed
-  when: manage_ssh_users is defined and manage_ssh_users|bool
-  user:
-    name: "{{ item }}"
-    state: absent
-    remove: true
-    force: true
-  with_items:
-    - "{{ non_users }}"
-  tags:
-    - non_users
-
 - name: create ssh_groups like wheel, staff and users
   when: manage_ssh_groups is defined and manage_ssh_groups|bool
   group:
@@ -211,23 +201,32 @@
   tags:
     - ssh_groups
 
-- name: ensure the people in ssh_users have an account
+- name: ensure the people in ssh_users have a user created with options
   when:
     - manage_ssh_users is defined and manage_ssh_users|bool
   user:
     name: "{{ item.username }}"
     uid: "{{ item.uid | default(omit) }}"
+    group: "{{ item.group | default('users') }}"
     seuser: "{{ item.seuser | default('user_u') }}"
+    comment: "{{ item.comment | default(omit) }}"
+    create_home: "{{ item.create_home | default('true') }}"
+    move_home: "{{ item.move_home | default(omit) }}"
+    password_lock: "{{ item.password_lock | default('true') }}"
+    home: "{{ item.home | default(omit) }}"
+    expires: "{{ item.expires | default(omit) }}"
+    generate_ssh_key: "{{ item.generate_ssh_key | default('false'') }}"
     non_unique: true  # for cleaning up inconsistent uids
     shell: "{{ item.shell }}"
     state: present
+    system: "{{ item.system | default(omit) }}"
   with_items:
     - "{{ ssh_users }}"
   tags:
     - ssh_users
 
 - name: ensure the people in ssh_users have a seuser type
-  when: manage_ssh_users is defined and manage_ssh_users|bool
+  when: semanage_ssh_users is defined and semanage_ssh_users|bool
   command: "semanage login -a -s {{ item.seuser | default('xguest_u') }} {{ item.username }}"
   with_items: "{{ ssh_users }}"
   tags:
@@ -280,6 +279,28 @@
   tags:
     - ssh_users
 
+- name: ensure all keys of non_users are removed
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  file:
+    dest: "/etc/ssh/authorized_keys/{{ item }}"
+    state: absent
+  with_items:
+    - "{{ non_users }}"
+  tags:
+    - non_users
+
+- name: ensure all non_users are removed
+  when: manage_ssh_users is defined and manage_ssh_users|bool
+  user:
+    name: "{{ item }}"
+    state: absent
+    remove: true
+    force: true
+  with_items:
+    - "{{ non_users }}"
+  tags:
+    - non_users
+
 - name: lock central authorized_keys files for writing
   when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
   shell: chattr +i /etc/ssh/authorized_keys/*
@@ -298,17 +319,6 @@
     - "{{ ssh_users }}"
   tags:
     - ssh_users
-
-- name: install trusted-user-ca-keys.pem
-  when: signed_ssh_keys is defined and signed_ssh_keys|bool
-  copy:
-    src: trusted-user-ca-keys.pem
-    dest: /etc/ssh/trusted-user-ca-keys.pem
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - signed_ssh_keys
 
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet

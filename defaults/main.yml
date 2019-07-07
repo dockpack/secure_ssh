@@ -6,6 +6,10 @@ signed_ssh_keys: true
 # Please read the tasks before enabling
 distribute_ssh_keys: false
 
+# Users will not be able to modify their pubkey
+# set AuthorizedKeysFile /dev/null to rely on signed keys.
+AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
+
 # Change from user private groups to 'ssh_groups:'
 manage_ssh_groups: false
 # The wheel group is used in files/sudoers/user_sudo
@@ -16,21 +20,22 @@ ssh_groups:
     - users
     - games
 
-# Confine users to seuser classes
 # adds all in 'ssh_users:' removes all 'non_users:'
 manage_ssh_users: false
-# This dict should contain at least one entry
-non_users:
-  - games
-  - ftp
-# add users do not delete users that left, comment the lines
+
+# add users do not delete users that left, just comment the lines
 # staff, wheel and users groups need an ssh pub key.
 ssh_users:
   - username: vagrant
     shell: /bin/bash
     group: wheel
     seuser: unconfined_u
-
+# This dict should contain at least one entry like default accounts
+non_users:
+  - games
+  - ftp
+# The seuser property helps to confine users to policy classes
+semanage_ssh_users: true
 # https://major.io/2013/07/05/confine-untrusted-users-including-your-children-with-selinux/
 # https://danwalsh.livejournal.com/66587.html
 # There are five main SELinux seuser values:

@@ -11,6 +11,4 @@ X11Forwarding: 'no'
 # Reduce brute-force attacks
 PubkeyAuthentication: 'yes'
 
-# Users will not be able to modify their pubkey
-AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
 TrustedUserCAKeys: '/etc/ssh/trusted-user-ca-keys.pem'
