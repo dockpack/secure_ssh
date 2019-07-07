@@ -3,8 +3,12 @@
   hosts: all
   become: true
   vars:
+    # set ChallengeResponseAuthentication yes for use with Hashicorp Vault
+    ChallengeResponseAuthentication: 'yes'
+#    PasswordAuthentication: 'yes'
+    hashicorp_vault_ssh: true
+
     signed_ssh_keys: true
-    PasswordAuthentication: 'yes'
     # Please read the tasks before enabling
     distribute_ssh_keys: true
     # Change from user private groups to 'ssh_groups:'

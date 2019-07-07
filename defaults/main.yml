@@ -63,10 +63,10 @@ hashicorp_vault_ssh: false
 ChallengeResponseAuthentication: 'no'
 
 # if hashicorp_vault_ssh: true, then the below are relevant
-hashi_url: 'https://releases.hashicorp.com/'
+hashi_url: 'https://releases.hashicorp.com'
 vault_helper_zip: vault-ssh-helper_0.1.4_linux_amd64.zip
 vault_helper_url: |
-  "{{ hashi_url }}/vault-ssh-helper/0.1.4/{{ vault_helper_zip }}"
+  {{ hashi_url }}/vault-ssh-helper/0.1.4/{{ vault_helper_zip }}
 vault_helper_sha256sum: |
   156ce8250725e64a3e4dc51018a18813dd44d1f2a6c853976bc20e1625d631a1
 vault_addr: "{{ lookup('env','VAULT_ADDR') }}"
