@@ -1,0 +1,16 @@
+---
+
+# Skip IPv6
+AddressFamily: inet
+
+# Don't be stupid
+PermitEmptyPasswords: 'no'
+PermitRootLogin: 'no'
+X11Forwarding: 'no'
+
+# Reduce brute-force attacks
+PasswordAuthentication: 'no'
+PubkeyAuthentication: 'yes'
+
+# Users will not be able to modify their pubkey
+AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
