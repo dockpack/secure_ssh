@@ -109,6 +109,8 @@
       line: "MaxSessions {{ MaxSessions }}"
     - regexp: '^(#)?IgnoreRhosts'
       line: 'IgnoreRhosts yes'
+    - regexp: '^(#)?IgnoreUserKnownHosts'
+      line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?StrictModes'
       line: 'StrictModes yes'
     - regexp: '^(#)?HostbasedAuthentication'
