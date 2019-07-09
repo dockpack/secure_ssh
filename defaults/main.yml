@@ -46,6 +46,7 @@ semanage_ssh_users: true
 
 # Recommended
 PasswordAuthentication: 'no'
+GSSAPIAuthentication: 'no'
 MaxAuthTries: 4
 StrictModes: 'yes'
 Port: 22

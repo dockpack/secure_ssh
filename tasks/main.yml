@@ -80,6 +80,8 @@
       line: "AddressFamily {{ AddressFamily }}"
     - regexp: '^(#)?PubkeyAuthentication'
       line: "PubkeyAuthentication {{ PubkeyAuthentication }}"
+    - regexp: '^(#)?GSSAPIAuthentication'
+      line: "GSSAPIAuthentication {{ GSSAPIAuthentication }}"
     - regexp: '^ChallengeResponseAuthentication'
       line: |
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
