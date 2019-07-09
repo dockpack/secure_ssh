@@ -7,7 +7,7 @@
     state: started
     enabled: true
 
-- name: firewalld configuration http
+- name: firewalld configuration ssh
   firewalld:
     service: ssh
     permanent: true
