@@ -5,14 +5,14 @@
   service:
     name: firewalld
     state: started
-    enabled: yes
+    enabled: true
 
 - name: firewalld configuration http
   firewalld:
     service: ssh
     permanent: true
     state: enabled
-    immediate: yes
+    immediate: true
 
 - name: ensure role dependencies are installed
   package:
@@ -159,20 +159,6 @@
   notify: restart sshd
   tags:
     - config
-
-- name: Ensure permission 0644 on /etc/ssh/*.pub
-  file:
-    path: "{{ item }}"
-    mode: 0644
-  with_items:
-    - /etc/ssh/*.pub
-
-- name: Ensure permission 0600 on /etc/ssh/*_key
-  file:
-    path: "{{ item }}"
-    mode: 0600
-  with_items:
-    - /etc/ssh/*_key
 
 - name: create .ssh in user skeleton
   file:
