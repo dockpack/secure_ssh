@@ -361,7 +361,7 @@
 
 - name: create the legal banner when users logged in.
   copy:
-    src: issue.net
+    src: issue
     dest: /etc/issue.net
     owner: root
     group: root
@@ -369,7 +369,7 @@
 
 - name: display the legal banner before user logs in op console.
   copy:
-    src: issue.net
+    src: issue
     dest: /etc/issue
     owner: root
     group: root
@@ -379,7 +379,7 @@
   lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "^Banner"
-    line: Banner /etc/issue.net
+    line: Banner /etc/issue
   notify: restart sshd
 
 ## TODO Hashicorp Vault
