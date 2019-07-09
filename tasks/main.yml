@@ -6,6 +6,8 @@
     name: firewalld
     state: started
     enabled: true
+  tags:
+    - firewall
 
 - name: firewalld configuration ssh
   firewalld:
@@ -13,6 +15,17 @@
     permanent: true
     state: enabled
     immediate: true
+  tags:
+    - firewall
+
+- name: disable requiretty in sudoers file
+  lineinfile:
+    path: /etc/firewalld/firewalld.conf
+    regexp: '^DefaultZone'
+    line: 'DefaultZone=drop'
+    state: present
+  tags:
+    - firewall
 
 - name: ensure role dependencies are installed
   package:
@@ -80,6 +93,7 @@
     mode: 0644
   notify: restart sshd
   tags:
+    - config
     - signed_ssh_keys
 
 - name: Harden SSH configuration
@@ -126,6 +140,8 @@
       line: 'IgnoreRhosts yes'
     - regexp: '^(#)?IgnoreUserKnownHosts'
       line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
+    - regexp: '^(#)?Banner'
+      line: 'Banner /etc/issue'
     - regexp: '^(#)?StrictModes'
       line: 'StrictModes yes'
     - regexp: '^(#)?Compression'
@@ -374,13 +390,6 @@
     owner: root
     group: root
     mode: 0644
-
-- name: display a legal banner before at network login.
-  lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "^Banner"
-    line: Banner /etc/issue
-  notify: restart sshd
 
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
