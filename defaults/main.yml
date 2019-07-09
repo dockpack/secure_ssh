@@ -2,13 +2,12 @@
 
 # Allow Signed SSH keys, place your CA key in ansible/files
 signed_ssh_keys: true
+# set AuthorizedKeysFile /dev/null to rely on signed key exclusively
 
 # Please read the tasks before changing
 distribute_ssh_keys: true
-AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
-
 # Users will not be able to modify their pubkey
-# set AuthorizedKeysFile /dev/null to rely on signed keys.
+AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
 
 # Change from user private groups to 'ssh_groups:'
 manage_ssh_groups: false

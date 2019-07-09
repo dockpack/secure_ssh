@@ -58,6 +58,17 @@
   tags:
     - signed_ssh_keys
 
+- name: manage revoked_keys
+  copy:
+    src: revoked_keys
+    dest: /etc/ssh/revoked_keys
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart sshd
+  tags:
+    - signed_ssh_keys
+
 - name: Harden SSH configuration
   lineinfile:
     dest: /etc/ssh/sshd_config
