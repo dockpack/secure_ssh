@@ -3,12 +3,12 @@
 # Allow Signed SSH keys, place your CA key in ansible/files
 signed_ssh_keys: true
 
-# Please read the tasks before enabling
-distribute_ssh_keys: false
+# Please read the tasks before changing
+distribute_ssh_keys: true
+AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
 
 # Users will not be able to modify their pubkey
 # set AuthorizedKeysFile /dev/null to rely on signed keys.
-AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
 
 # Change from user private groups to 'ssh_groups:'
 manage_ssh_groups: false
@@ -53,7 +53,8 @@ Port: 22
 MaxSessions: 10
 PermitUserEnvironment: 'no'
 LoginGraceTime: '60'
-
+ClientAliveInterval: 3600
+ClientAliveCountMax: 0
 # Skip IPv6
 AddressFamily: inet
 
@@ -63,10 +64,10 @@ hashicorp_vault_ssh: false
 ChallengeResponseAuthentication: 'no'
 
 # if hashicorp_vault_ssh: true, then the below are relevant
-hashi_url: 'https://releases.hashicorp.com/'
+hashi_url: 'https://releases.hashicorp.com'
 vault_helper_zip: vault-ssh-helper_0.1.4_linux_amd64.zip
 vault_helper_url: |
-  "{{ hashi_url }}/vault-ssh-helper/0.1.4/{{ vault_helper_zip }}"
+  {{ hashi_url }}/vault-ssh-helper/0.1.4/{{ vault_helper_zip }}
 vault_helper_sha256sum: |
   156ce8250725e64a3e4dc51018a18813dd44d1f2a6c853976bc20e1625d631a1
 vault_addr: "{{ lookup('env','VAULT_ADDR') }}"
