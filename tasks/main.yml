@@ -93,6 +93,8 @@
       line: 'UsePAM yes'
     - regexp: '^(#)?Port'
       line: "Port {{ Port }}"
+    - regexp: '^(#)?PrintLastLog'
+      line: "PrintLastLog yes"
     - regexp: '^(#)?AuthorizedKeysFile'
       line: "AuthorizedKeysFile {{ AuthorizedKeysFile }}"
     - regexp: '^(#)?PasswordAuthentication'
@@ -144,6 +146,20 @@
   notify: restart sshd
   tags:
     - config
+
+- name: Ensure permission 0644 on /etc/ssh/*.pub
+  file:
+    path: "{{ item }}"
+    mode: 0644
+  with_items:
+    - /etc/ssh/*.pub
+
+- name: Ensure permission 0600 on /etc/ssh/*_key
+  file:
+    path: "{{ item }}"
+    mode: 0600
+  with_items:
+    - /etc/ssh/*_key
 
 - name: create .ssh in user skeleton
   file:
