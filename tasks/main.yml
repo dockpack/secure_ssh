@@ -98,7 +98,7 @@
     - regexp: '^(#)?PermitEmptyPasswords'
       line: "PermitEmptyPasswords {{ PermitEmptyPasswords }}"
     - regexp: '^(#)?X11Forwarding'
-      line: "X11Forwarding {{ X11Forwarding }}"
+      line: "X11Forwarding yes"
     - regexp: '^(#)?PermitRootLogin'
       line: "PermitRootLogin {{ PermitRootLogin }}"
     - regexp: '^(#)?MaxAuthTries \d'
