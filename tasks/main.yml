@@ -1,6 +1,19 @@
 ---
 # tasks file for secure_ssh
 
+- name: ensure firewalld is running
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+
+- name: firewalld configuration http
+  firewalld:
+    service: ssh
+    permanent: true
+    state: enabled
+    immediate: yes
+
 - name: ensure role dependencies are installed
   package:
     name:
