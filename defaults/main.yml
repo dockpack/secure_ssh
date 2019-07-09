@@ -54,7 +54,7 @@ Port: 22
 MaxSessions: 10
 PermitUserEnvironment: 'no'
 LoginGraceTime: '60'
-ClientAliveInterval: 3600
+ClientAliveInterval: 600
 ClientAliveCountMax: 0
 # Skip IPv6
 AddressFamily: inet
