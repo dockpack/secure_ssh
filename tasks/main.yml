@@ -360,6 +360,29 @@
   tags:
     - ssh_users
 
+- name: create the legal banner when users logged in.
+  copy:
+    src: issue.net
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: 0644
+
+- name: display the legal banner before user logs in op console.
+  copy:
+    src: issue.net
+    dest: /etc/issue
+    owner: root
+    group: root
+    mode: 0644
+
+- name: display a legal banner before at network login.
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^Banner"
+    line: Banner /etc/issue.net
+  notify: restart sshd
+
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
