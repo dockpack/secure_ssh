@@ -134,8 +134,8 @@
       line: "HostbasedAuthentication no"
     - regexp: '^(#)?PermitUserEnvironment'
       line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
-    - regexp: '^(#)?ClientAliveCountMax'
-      line: "ClientAliveInterval {{ ClientAliveCountMax }}"
+    - regexp: '^(#)?ClientAliveInterval'
+      line: "ClientAliveInterval {{ ClientAliveInterval }}"
     - regexp: '^(#)?ClientAliveCountMax'
       line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
     - regexp: '^(#)?Ciphers'
