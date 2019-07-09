@@ -113,6 +113,8 @@
       line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?StrictModes'
       line: 'StrictModes yes'
+    - regexp: '^(#)?Compression'
+      line: 'Compression {{ Compression }}'
     - regexp: '^(#)?HostbasedAuthentication'
       line: "HostbasedAuthentication no"
     - regexp: '^(#)?PermitUserEnvironment'

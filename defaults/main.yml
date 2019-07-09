@@ -56,6 +56,7 @@ PermitUserEnvironment: 'no'
 LoginGraceTime: '60'
 ClientAliveInterval: 600
 ClientAliveCountMax: 0
+Compression: delayed
 # Skip IPv6
 AddressFamily: inet
 
