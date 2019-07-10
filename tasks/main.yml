@@ -94,6 +94,7 @@
   notify: restart sshd
   tags:
     - config
+    - revoked_keys
     - signed_ssh_keys
 
 - name: Harden SSH configuration
@@ -157,8 +158,7 @@
     - regexp: '^(#)?Ciphers'
       line: 'Ciphers aes256-ctr,aes192-ctr,aes128-ctr'
     - regexp: '^(#)?MACs'
-      # yamllint disable-line rule:line-length
-      line: 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com'
+      line: 'MACs hmac-sha2-256,hmac-sha2-512,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com'
     - regexp: '^(#)?LoginGraceTime'
       line: "LoginGraceTime {{ LoginGraceTime }}"
   notify: restart sshd
