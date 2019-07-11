@@ -18,12 +18,13 @@
   tags:
     - firewall
 
-- name: disable requiretty in sudoers file
+- name: set default zone to drop
   lineinfile:
     path: /etc/firewalld/firewalld.conf
     regexp: '^DefaultZone'
     line: 'DefaultZone=drop'
     state: present
+  notify: restart firewalld
   tags:
     - firewall
 
