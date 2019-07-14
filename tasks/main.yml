@@ -56,8 +56,8 @@
 
 - name: create sudoers.d file
   copy:
-    src: 'sudoers/users_sudo'
-    dest: /etc/sudoers.d/users_sudo
+    src: 'sudoers/sudo_wheel'
+    dest: /etc/sudoers.d/sudo_wheel
     owner: root
     group: root
     mode: "0440"
