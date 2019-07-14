@@ -376,13 +376,14 @@
   tags:
     - ssh_users
 
-- name: create the legal banner when users logged in.
+- name: create the legal banner when users log in.
   copy:
     src: issue
     dest: /etc/issue.net
     owner: root
     group: root
     mode: 0644
+  ignore_errors: true
 
 - name: display the legal banner before user logs in op console.
   copy:
@@ -391,6 +392,7 @@
     owner: root
     group: root
     mode: 0644
+  ignore_errors: true
 
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
