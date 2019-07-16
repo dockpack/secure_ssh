@@ -11,6 +11,7 @@
 
 - name: firewalld configuration ssh
   firewalld:
+    zone: drop
     service: ssh
     permanent: true
     state: enabled
