@@ -36,6 +36,7 @@
       - authconfig
       - policycoreutils-python
       - unzip
+      - xauth
     state: present
   tags:
     - fail2ban
@@ -112,6 +113,10 @@
       line: "PubkeyAuthentication {{ PubkeyAuthentication }}"
     - regexp: '^(#)?GSSAPIAuthentication'
       line: "GSSAPIAuthentication {{ GSSAPIAuthentication }}"
+    - regexp: '^(#)?KerberosAuthentication'
+      line: "KerberosAuthentication {{ KerberosAuthentication }}"
+    - regexp: '^(#)?RhostsRSAAuthentication'
+      line: "RhostsRSAAuthentication {{ RhostsRSAAuthentication }}"
     - regexp: '^ChallengeResponseAuthentication'
       line: |
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
@@ -123,6 +128,8 @@
       line: 'UsePAM yes'
     - regexp: '^(#)?Port'
       line: "Port {{ Port }}"
+    - regexp: "^(#)?Protocol"
+      line: "Protocol 2"
     - regexp: '^(#)?PrintLastLog'
       line: "PrintLastLog yes"
     - regexp: '^(#)?AuthorizedKeysFile'
@@ -133,6 +140,8 @@
       line: "PermitEmptyPasswords {{ PermitEmptyPasswords }}"
     - regexp: '^(#)?X11Forwarding'
       line: "X11Forwarding yes"
+    - regexp: '^(#)?X11UseLocalhost'
+      line: "X11UseLocalhost no"
     - regexp: '^(#)?PermitRootLogin'
       line: "PermitRootLogin {{ PermitRootLogin }}"
     - regexp: '^(#)?MaxAuthTries \d'
@@ -242,6 +251,8 @@
   when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
   shell: chattr -i /etc/ssh/authorized_keys/*
   changed_when: false  # it is a toggle
+  register: keys_dir
+  failed_when: "keys_dir.rc != 0 and ('chattr: No such file or directory while trying to stat /etc/ssh/authorized_keys/*' not in keys_dir.stderr_lines)"
   ignore_errors: true
   tags:
     - ssh_users
@@ -377,16 +388,16 @@
   tags:
     - ssh_users
 
-- name: create the legal banner when users log in.
+- name: display the legal banner before user logs in op console.
   copy:
-    src: issue
+    src: issue.net
     dest: /etc/issue.net
     owner: root
     group: root
     mode: 0644
   ignore_errors: true
 
-- name: display the legal banner before user logs in op console.
+- name: create the legal banner when users log in.
   copy:
     src: issue
     dest: /etc/issue
@@ -438,8 +449,8 @@
     line: "{{ item.line }}"
     state: present
   with_items:
-    - {regexp: '^auth       substack     password-auth', line: '#auth       substack     password-auth'}
-    - {regexp: '^password   include      password-auth', line: '#password   include      password-auth'}
+    - {regexp: '^(#)?auth       substack     password-auth', line: '#auth       substack     password-auth'}
+    - {regexp: '^(#)?password   include      password-auth', line: '#password   include      password-auth'}
 
 - name: Insert the vault-ssh-helper configuration for ssh auth
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool

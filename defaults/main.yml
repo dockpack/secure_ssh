@@ -47,6 +47,8 @@ semanage_ssh_users: true
 # Recommended
 PasswordAuthentication: 'no'
 GSSAPIAuthentication: 'no'
+KerberosAuthentication: 'no'
+RhostsRSAAuthentication: 'no'
 IgnoreUserKnownHosts: 'yes'
 MaxAuthTries: 4
 StrictModes: 'yes'
@@ -54,7 +56,7 @@ Port: 22
 MaxSessions: 10
 PermitUserEnvironment: 'no'
 LoginGraceTime: '60'
-ClientAliveInterval: 600
+ClientAliveInterval: 300
 ClientAliveCountMax: 0
 Compression: delayed
 # Skip IPv6
