@@ -182,7 +182,7 @@
     state: file
     owner: root
     group: root
-    mode: 0400
+    mode: 0600
   notify: restart sshd
   tags:
     - config
