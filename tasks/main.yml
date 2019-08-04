@@ -116,7 +116,7 @@
     - regexp: '^(#)?KerberosAuthentication'
       line: "KerberosAuthentication {{ KerberosAuthentication }}"
     - regexp: '^(#)?RhostsRSAAuthentication'
-      line: "RhostsRSAAuthentication {{ RhostsRSAAuthentication }}"
+      line: "#RhostsRSAAuthentication deprecated option"
     - regexp: '^ChallengeResponseAuthentication'
       line: |
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
