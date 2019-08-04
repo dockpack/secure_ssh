@@ -48,7 +48,6 @@ semanage_ssh_users: true
 PasswordAuthentication: 'no'
 GSSAPIAuthentication: 'no'
 KerberosAuthentication: 'no'
-RhostsRSAAuthentication: 'no'
 IgnoreUserKnownHosts: 'yes'
 MaxAuthTries: 4
 StrictModes: 'yes'
