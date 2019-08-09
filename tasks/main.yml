@@ -109,6 +109,8 @@
   with_items:
     - regexp: '^(#)?AddressFamily'
       line: "AddressFamily {{ AddressFamily }}"
+    - regexp: '^(#)?LogLevel'
+      line: "LogLevel {{ LogLevel }}"
     - regexp: '^(#)?PubkeyAuthentication'
       line: "PubkeyAuthentication {{ PubkeyAuthentication }}"
     - regexp: '^(#)?GSSAPIAuthentication'
@@ -130,6 +132,10 @@
       line: "Port {{ Port }}"
     - regexp: "^(#)?Protocol"
       line: "Protocol 2"
+    - regexp: '^(#)?AllowAgentForwarding'
+      line: "AllowAgentForwarding {{ AllowAgentForwarding }}"
+    - regexp: '^(#)?AllowTcpForwarding'
+      line: "AllowTcpForwarding {{ AllowTcpForwarding }}"
     - regexp: '^(#)?PrintLastLog'
       line: "PrintLastLog yes"
     - regexp: '^(#)?AuthorizedKeysFile'
@@ -167,9 +173,11 @@
     - regexp: '^(#)?ClientAliveCountMax'
       line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
     - regexp: '^(#)?Ciphers'
-      line: 'Ciphers aes128-ctr,aes192-ctr,aes256-ctr'
+      line: "Ciphers {{ Ciphers }}"
+    - regexp: '^(#)?KexAlgorithms'
+      line: "KexAlgorithms {{ KexAlgorithms }}"
     - regexp: '^(#)?MACs'
-      line: 'MACs hmac-sha2-512,hmac-sha2-256'
+      line: "MACs {{ MACs }}"
     - regexp: '^(#)?LoginGraceTime'
       line: "LoginGraceTime {{ LoginGraceTime }}"
   notify: restart sshd
@@ -186,6 +194,11 @@
   notify: restart sshd
   tags:
     - config
+
+- name: deactivate short Diffie-Hellman moduli
+  shell: "awk '$5 >= 3071' /etc/ssh/moduli > /etc/ssh/moduli.tmp && mv -f /etc/ssh/moduli.tmp /etc/ssh/moduli"
+  tags:
+    - skip_ansible_lint
 
 - name: create .ssh in user skeleton
   file:
