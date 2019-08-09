@@ -6,11 +6,13 @@ signed_ssh_keys: true
 
 # Please read the tasks before changing
 distribute_ssh_keys: true
+
 # Users will not be able to modify their pubkey
 AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
 
 # Change from user private groups to 'ssh_groups:'
 manage_ssh_groups: false
+
 # The wheel group is used in files/sudoers/user_sudo
 ssh_groups:
   with_items:
@@ -18,6 +20,7 @@ ssh_groups:
     - staff
     - users
     - games
+    - chroot
 
 # adds all in 'ssh_users:' removes all 'non_users:'
 manage_ssh_users: false
