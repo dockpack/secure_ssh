@@ -74,3 +74,18 @@ ssh_users:
 - user\_u: - same as xguest\_u, but networking isn’t restricted
 - staff\_u: - same as user\_u, but sudo is allowed (su isn’t allowed)
 - unconfined\_u: - full access
+
+
+Fail2ban
+--------
+
+Some commands to verify the config. Hackers show up in /var/log/secure.
+
+```
+firewall-cmd --list-rich-rules
+ipset list fail2ban-sshd
+firewall-cmd --ipset=fail2ban-sshd --add-entry=222.186.52.124
+ipset add fail2ban-sshd  112.85.42.237timeout 86400 -exist
+```
+
+45.55.176.164 The Mozilla SSH Observatory scans from sshscan.rubidus.com at 45.55.176.164.
