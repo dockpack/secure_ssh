@@ -1,0 +1,11 @@
+[DEFAULT]
+ignoreip = 127.0.0.1 45.55.176.164
+findtime  = 3600
+
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/secure
+banaction = richrule-dropzone
+backend = %(sshd_backend)s
+maxretry = 3

@@ -42,11 +42,32 @@
     - fail2ban
     - authconfig
 
+- name: configure fail2ban jail
+  copy:
+    src: jail.local
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart fail2ban
+  tags:
+    - fail2ban
+
+- name: configure fail2ban action
+  copy:
+    src: richrule-dropzone.conf
+    dest: /etc/fail2ban/action.d/richrule-dropzone.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart fail2ban
+  tags:
+    - fail2ban
+
 - name: enable fail2ban
   systemd:
     name: fail2ban
     enabled: true
-    state: started
   tags:
     - fail2ban
 
