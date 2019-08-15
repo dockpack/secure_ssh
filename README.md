@@ -86,6 +86,7 @@ firewall-cmd --list-rich-rules
 ipset list fail2ban-sshd
 firewall-cmd --ipset=fail2ban-sshd --add-entry=222.186.52.124
 ipset add fail2ban-sshd  112.85.42.237timeout 86400 -exist
+fail2ban-client status sshd
 ```
 
 45.55.176.164 The Mozilla SSH Observatory scans from sshscan.rubidus.com at 45.55.176.164.
