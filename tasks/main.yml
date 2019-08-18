@@ -9,25 +9,25 @@
   tags:
     - firewall
 
-- name: firewalld configuration ssh
-  firewalld:
-    zone: drop
-    service: ssh
-    permanent: true
-    state: enabled
-    immediate: true
-  tags:
-    - firewall
+#- name: firewalld configuration ssh
+#  firewalld:
+#    zone: drop
+#    service: ssh
+#    permanent: true
+#    state: enabled
+#    immediate: true
+#  tags:
+#    - firewall
 
-- name: set default zone to drop
-  lineinfile:
-    path: /etc/firewalld/firewalld.conf
-    regexp: '^DefaultZone'
-    line: 'DefaultZone=drop'
-    state: present
-  notify: restart firewalld
-  tags:
-    - firewall
+#- name: set default zone to drop
+#  lineinfile:
+#    path: /etc/firewalld/firewalld.conf
+#    regexp: '^DefaultZone'
+#    line: 'DefaultZone=drop'
+#    state: present
+#  notify: restart firewalld
+#  tags:
+#    - firewall
 
 - name: ensure role dependencies are installed
   package:
@@ -42,34 +42,34 @@
     - fail2ban
     - authconfig
 
-- name: configure fail2ban jail
-  copy:
-    src: jail.local
-    dest: /etc/fail2ban/jail.local
-    owner: root
-    group: root
-    mode: 0644
-  notify: restart fail2ban
-  tags:
-    - fail2ban
+#- name: configure fail2ban jail
+#  copy:
+#    src: jail.local
+#    dest: /etc/fail2ban/jail.local
+#    owner: root
+#    group: root
+#    mode: 0644
+#  notify: restart fail2ban
+#  tags:
+#    - fail2ban
 
-- name: configure fail2ban action
-  copy:
-    src: richrule-dropzone.conf
-    dest: /etc/fail2ban/action.d/richrule-dropzone.conf
-    owner: root
-    group: root
-    mode: 0644
-  notify: restart fail2ban
-  tags:
-    - fail2ban
+#- name: configure fail2ban action
+#  copy:
+#    src: richrule-dropzone.conf
+#    dest: /etc/fail2ban/action.d/richrule-dropzone.conf
+#    owner: root
+#    group: root
+#    mode: 0644
+#  notify: restart fail2ban
+#  tags:
+#    - fail2ban
 
-- name: enable fail2ban
-  systemd:
-    name: fail2ban
-    enabled: true
-  tags:
-    - fail2ban
+#- name: enable fail2ban
+#  systemd:
+#    name: fail2ban
+#    enabled: true
+#  tags:
+#    - fail2ban
 
 - name: ensure password hashing algorithm is SHA-512
   command: authconfig --passalgo=sha512 --update
@@ -120,6 +120,37 @@
     - config
     - revoked_keys
     - signed_ssh_keys
+
+- name: display the legal banner before user logs in.
+  copy:
+    src: issue.net
+    dest: /etc/issue.net
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart sshd
+  tags:
+    - banner
+
+- name: create the legal banner when users log in on console.
+  copy:
+    src: issue
+    dest: /etc/issue
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - banner
+
+- name: create the legal banner when users logged in.
+  copy:
+    src: motd
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - banner
 
 - name: Harden SSH configuration
   lineinfile:
@@ -180,7 +211,7 @@
     - regexp: '^(#)?IgnoreUserKnownHosts'
       line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?Banner'
-      line: 'Banner /etc/issue'
+      line: 'Banner /etc/issue.net'
     - regexp: '^(#)?StrictModes'
       line: 'StrictModes yes'
     - regexp: '^(#)?Compression'
@@ -206,6 +237,7 @@
   notify: restart sshd
   tags:
     - config
+    - banner
 
 - name: ensure permissions on /etc/ssh/sshd_config are restricted
   file:
@@ -423,24 +455,6 @@
     - "{{ ssh_users }}"
   tags:
     - ssh_users
-
-- name: display the legal banner before user logs in op console.
-  copy:
-    src: issue.net
-    dest: /etc/issue.net
-    owner: root
-    group: root
-    mode: 0644
-  ignore_errors: true
-
-- name: create the legal banner when users log in.
-  copy:
-    src: issue
-    dest: /etc/issue
-    owner: root
-    group: root
-    mode: 0644
-  ignore_errors: true
 
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
