@@ -63,8 +63,9 @@ PermitUserEnvironment: 'no'
 LoginGraceTime: '60'
 # LogLevel VERBOSE logs user's key fingerprint on login. Needed to have a clear audit track of which key was using to log in.
 LogLevel: VERBOSE
-ClientAliveInterval: 300
-ClientAliveCountMax: 3
+TCPKeepAlive: 'no'
+ClientAliveInterval: 30
+ClientAliveCountMax: 3600
 Compression: delayed
 Ciphers: chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
 HostKeyAlgorithms: ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa
