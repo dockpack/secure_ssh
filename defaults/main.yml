@@ -1,5 +1,6 @@
 ---
-
+secure_ssh_fail2ban: false
+secure_ssh_dropzone: false
 # Allow Signed SSH keys, place your CA key in ansible/files
 signed_ssh_keys: true
 # set AuthorizedKeysFile /dev/null to rely on signed key exclusively
