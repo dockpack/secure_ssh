@@ -9,67 +9,88 @@
   tags:
     - firewall
 
-#- name: firewalld configuration ssh
-#  firewalld:
-#    zone: drop
-#    service: ssh
-#    permanent: true
-#    state: enabled
-#    immediate: true
-#  tags:
-#    - firewall
+- name: firewalld configuration ssh
+  when: secure_ssh_dropzone|bool
+  firewalld:
+    zone: drop
+    service: ssh
+    permanent: true
+    state: enabled
+    immediate: true
+  tags:
+    - firewall
 
-#- name: set default zone to drop
-#  lineinfile:
-#    path: /etc/firewalld/firewalld.conf
-#    regexp: '^DefaultZone'
-#    line: 'DefaultZone=drop'
-#    state: present
-#  notify: restart firewalld
-#  tags:
-#    - firewall
+- name: set default zone to drop
+  when: secure_ssh_dropzone|bool
+  lineinfile:
+    path: /etc/firewalld/firewalld.conf
+    regexp: '^DefaultZone'
+    line: 'DefaultZone=drop'
+    state: present
+  notify: restart firewalld
+  tags:
+    - firewall
 
 - name: ensure role dependencies are installed
   package:
     name:
-      - fail2ban
       - authconfig
       - policycoreutils-python
       - unzip
       - xorg-x11-xauth
     state: present
   tags:
-    - fail2ban
     - authconfig
 
-#- name: configure fail2ban jail
-#  copy:
-#    src: jail.local
-#    dest: /etc/fail2ban/jail.local
-#    owner: root
-#    group: root
-#    mode: 0644
-#  notify: restart fail2ban
-#  tags:
-#    - fail2ban
+- name: remove fail2ban
+  when: not secure_ssh_fail2ban|bool
+  package:
+    name:
+      - fail2ban
+    state: absent
+  tags:
+    - fail2ban
 
-#- name: configure fail2ban action
-#  copy:
-#    src: richrule-dropzone.conf
-#    dest: /etc/fail2ban/action.d/richrule-dropzone.conf
-#    owner: root
-#    group: root
-#    mode: 0644
-#  notify: restart fail2ban
-#  tags:
-#    - fail2ban
+- name: install fail2ban
+  when: secure_ssh_fail2ban|bool
+  package:
+    name:
+      - fail2ban
+    state: present
+  tags:
+    - fail2ban
 
-#- name: enable fail2ban
-#  systemd:
-#    name: fail2ban
-#    enabled: true
-#  tags:
-#    - fail2ban
+- name: configure fail2ban jail
+  when: secure_ssh_fail2ban|bool
+  copy:
+    src: jail.local
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart fail2ban
+  tags:
+    - fail2ban
+
+- name: configure fail2ban action
+  when: secure_ssh_fail2ban|bool
+  copy:
+    src: richrule-dropzone.conf
+    dest: /etc/fail2ban/action.d/richrule-dropzone.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart fail2ban
+  tags:
+    - fail2ban
+
+- name: enable fail2ban
+  when: secure_ssh_fail2ban|bool
+  systemd:
+    name: fail2ban
+    enabled: true
+  tags:
+    - fail2ban
 
 - name: ensure password hashing algorithm is SHA-512
   command: authconfig --passalgo=sha512 --update
