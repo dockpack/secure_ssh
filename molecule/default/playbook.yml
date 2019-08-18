@@ -33,5 +33,5 @@
         seuser: xguest_u
 
   roles:
-    - role: base_epel
+    - role: dockpack.base_epel
     - role: secure_ssh
