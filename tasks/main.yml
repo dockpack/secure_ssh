@@ -297,7 +297,6 @@
     - config
 
 - name: deactivate short Diffie-Hellman moduli
-  when: secure_ssh_optional|bool
   shell: "awk '$5 >= 3071' /etc/ssh/moduli > /etc/ssh/moduli.tmp && mv -f /etc/ssh/moduli.tmp /etc/ssh/moduli"
   tags:
     - skip_ansible_lint
