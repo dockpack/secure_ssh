@@ -130,6 +130,7 @@
     - signed_ssh_keys
 
 - name: manage revoked_keys
+  when: signed_ssh_keys is defined and signed_ssh_keys|bool
   copy:
     src: revoked_keys
     dest: /etc/ssh/revoked_keys
@@ -141,6 +142,19 @@
     - config
     - revoked_keys
     - signed_ssh_keys
+
+- name: TrustedUserCAKeys configuration
+  when: signed_ssh_keys is defined and signed_ssh_keys|bool
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - regexp: '^(#)?TrustedUserCAKeys'
+      line: "TrustedUserCAKeys {{ TrustedUserCAKeys }}"
+    - regexp: '^(#)?RevokedKeys'
+      line: "RevokedKeys /etc/ssh/revoked_keys"
 
 - name: display the legal banner before user logs in.
   copy:
@@ -195,10 +209,6 @@
     - regexp: '^ChallengeResponseAuthentication'
       line: |
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
-    - regexp: '^(#)?TrustedUserCAKeys'
-      line: "TrustedUserCAKeys {{ TrustedUserCAKeys }}"
-    - regexp: '^(#)?RevokedKeys'
-      line: "RevokedKeys /etc/ssh/revoked_keys"
     - regexp: '^UsePAM'
       line: 'UsePAM yes'
     - regexp: '^(#)?Port'
