@@ -210,6 +210,10 @@
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
     - regexp: '^UsePAM'
       line: 'UsePAM yes'
+    - regexp: '^(#)?X11Forwarding'
+      line: "X11Forwarding yes"
+    - regexp: '^(#)?X11UseLocalhost'
+      line: "X11UseLocalhost no"
     - regexp: '^(#)?Port'
       line: "Port {{ Port }}"
     - regexp: "^(#)?Protocol"
@@ -242,6 +246,12 @@
       line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
     - regexp: '^(#)?LoginGraceTime'
       line: "LoginGraceTime {{ LoginGraceTime }}"
+    - regexp: '^(#)?Ciphers'
+      line: "Ciphers {{ Ciphers }}"
+    - regexp: '^(#)?KexAlgorithms'
+      line: "KexAlgorithms {{ KexAlgorithms }}"
+    - regexp: '^(#)?MACs'
+      line: "MACs {{ MACs }}"
   notify: restart sshd
   tags:
     - config
@@ -257,10 +267,6 @@
   with_items:
     - regexp: '^(#)?AddressFamily'
       line: "AddressFamily {{ AddressFamily }}"
-    - regexp: '^(#)?X11Forwarding'
-      line: "X11Forwarding yes"
-    - regexp: '^(#)?X11UseLocalhost'
-      line: "X11UseLocalhost no"
     - regexp: '^(#)?MaxAuthTries \d'
       line: "MaxAuthTries {{ MaxAuthTries | default('10') }}"
     - regexp: '^(#)?MaxSessions'
@@ -273,14 +279,8 @@
       line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?PermitUserEnvironment'
       line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
-    - regexp: '^(#)?Ciphers'
-      line: "Ciphers {{ Ciphers }}"
     - regexp: '^(#)?HostKeyAlgorithms'
       line: "HostKeyAlgorithms {{ HostKeyAlgorithms }}"
-    - regexp: '^(#)?KexAlgorithms'
-      line: "KexAlgorithms {{ KexAlgorithms }}"
-    - regexp: '^(#)?MACs'
-      line: "MACs {{ MACs }}"
   notify: restart sshd
   tags:
     - config
