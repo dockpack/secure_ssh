@@ -93,6 +93,7 @@
     - fail2ban
 
 - name: ensure password hashing algorithm is SHA-512
+  when: secure_ssh_optional|bool
   command: authconfig --passalgo=sha512 --update
   changed_when: false
   tags:
@@ -194,8 +195,6 @@
     line: "{{ item.line }}"
     state: present
   with_items:
-    - regexp: '^(#)?AddressFamily'
-      line: "AddressFamily {{ AddressFamily }}"
     - regexp: '^(#)?LogLevel'
       line: "LogLevel {{ LogLevel }}"
     - regexp: '^(#)?PubkeyAuthentication'
@@ -227,36 +226,53 @@
       line: "PasswordAuthentication {{ PasswordAuthentication }}"
     - regexp: '^(#)?PermitEmptyPasswords'
       line: "PermitEmptyPasswords {{ PermitEmptyPasswords }}"
-    - regexp: '^(#)?X11Forwarding'
-      line: "X11Forwarding yes"
-    - regexp: '^(#)?X11UseLocalhost'
-      line: "X11UseLocalhost no"
     - regexp: '^(#)?PermitRootLogin'
       line: "PermitRootLogin {{ PermitRootLogin }}"
-    - regexp: '^(#)?MaxAuthTries \d'
-      line: "MaxAuthTries {{ MaxAuthTries | default('10') }}"
-    - regexp: '^(#)?MaxSessions'
-      line: "MaxSessions {{ MaxSessions }}"
     - regexp: '^(#)?IgnoreRhosts'
       line: 'IgnoreRhosts yes'
-    - regexp: '^(#)?IgnoreUserKnownHosts'
-      line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?Banner'
       line: 'Banner /etc/issue.net'
-    - regexp: '^(#)?StrictModes'
-      line: 'StrictModes yes'
-    - regexp: '^(#)?Compression'
-      line: 'Compression {{ Compression }}'
     - regexp: '^(#)?HostbasedAuthentication'
       line: "HostbasedAuthentication no"
-    - regexp: '^(#)?PermitUserEnvironment'
-      line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
     - regexp: '^(#)?TCPKeepAlive'
       line: "TCPKeepAlive {{ TCPKeepAlive }}"
     - regexp: '^(#)?ClientAliveInterval'
       line: "ClientAliveInterval {{ ClientAliveInterval }}"
     - regexp: '^(#)?ClientAliveCountMax'
       line: "ClientAliveCountMax {{ ClientAliveCountMax }}"
+    - regexp: '^(#)?LoginGraceTime'
+      line: "LoginGraceTime {{ LoginGraceTime }}"
+  notify: restart sshd
+  tags:
+    - config
+    - banner
+
+- name: Optional SSH configuration
+  when: secure_ssh_optional|bool
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - regexp: '^(#)?AddressFamily'
+      line: "AddressFamily {{ AddressFamily }}"
+    - regexp: '^(#)?X11Forwarding'
+      line: "X11Forwarding yes"
+    - regexp: '^(#)?X11UseLocalhost'
+      line: "X11UseLocalhost no"
+    - regexp: '^(#)?MaxAuthTries \d'
+      line: "MaxAuthTries {{ MaxAuthTries | default('10') }}"
+    - regexp: '^(#)?MaxSessions'
+      line: "MaxSessions {{ MaxSessions }}"
+    - regexp: '^(#)?StrictModes'
+      line: 'StrictModes yes'
+    - regexp: '^(#)?Compression'
+      line: 'Compression {{ Compression }}'
+    - regexp: '^(#)?IgnoreUserKnownHosts'
+      line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
+    - regexp: '^(#)?PermitUserEnvironment'
+      line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
     - regexp: '^(#)?Ciphers'
       line: "Ciphers {{ Ciphers }}"
     - regexp: '^(#)?HostKeyAlgorithms'
@@ -265,12 +281,9 @@
       line: "KexAlgorithms {{ KexAlgorithms }}"
     - regexp: '^(#)?MACs'
       line: "MACs {{ MACs }}"
-    - regexp: '^(#)?LoginGraceTime'
-      line: "LoginGraceTime {{ LoginGraceTime }}"
   notify: restart sshd
   tags:
     - config
-    - banner
 
 - name: ensure permissions on /etc/ssh/sshd_config are restricted
   file:
@@ -284,6 +297,7 @@
     - config
 
 - name: deactivate short Diffie-Hellman moduli
+  when: secure_ssh_optional|bool
   shell: "awk '$5 >= 3071' /etc/ssh/moduli > /etc/ssh/moduli.tmp && mv -f /etc/ssh/moduli.tmp /etc/ssh/moduli"
   tags:
     - skip_ansible_lint
