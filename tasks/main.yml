@@ -229,7 +229,7 @@
     - regexp: '^(#)?PasswordAuthentication'
       line: "PasswordAuthentication {{ PasswordAuthentication }}"
     - regexp: '^(#)?PermitEmptyPasswords'
-      line: "PermitEmptyPasswords {{ PermitEmptyPasswords }}"
+      line: "PermitEmptyPasswords no"
     - regexp: '^(#)?PermitRootLogin'
       line: "PermitRootLogin {{ PermitRootLogin }}"
     - regexp: '^(#)?IgnoreRhosts'
