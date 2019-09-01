@@ -356,7 +356,7 @@
     state: directory
     owner: root
     group: root
-    mode: 0755
+    mode: 0711
   tags:
     - ssh_users
     - non_users
@@ -407,14 +407,20 @@
     - ssh_users
 
 - name: ensure the people in ssh_users have a seuser type
-  when: semanage_ssh_users is defined and semanage_ssh_users|bool
+  when:
+    - semanage_ssh_users is defined and semanage_ssh_users|bool
+    - ssh_users is defined
   command: "semanage login -a -s {{ item.seuser | default('xguest_u') }} {{ item.username }}"
   with_items: "{{ ssh_users }}"
+  register: seuser
+  failed_when: seuser.rc|int > 1
   tags:
     - ssh_users
 
 - name: set the primary group for users
-  when: manage_ssh_groups is defined and manage_ssh_groups|bool
+  when:
+    - manage_ssh_groups is defined and manage_ssh_groups|bool
+    - ssh_users is defined
   user:
     name: "{{ item.username }}"
     group: "{{ item.group | default('users') }}"
@@ -425,7 +431,9 @@
     - ssh_users
 
 - name: remove users from all groups except their primary group
-  when: manage_ssh_groups is defined and manage_ssh_groups|bool
+  when:
+    - manage_ssh_groups is defined and manage_ssh_groups|bool
+    - ssh_users is defined
   user:
     name: "{{ item.username }}"
     group: "{{ item.group | default('users') }}"
@@ -435,7 +443,9 @@
     - ssh_users
 
 - name: remove user private groups
-  when: manage_ssh_groups is defined and manage_ssh_groups|bool
+  when:
+    - manage_ssh_groups is defined and manage_ssh_groups|bool
+    - ssh_users is defined
   group:
     name: "{{ item.username }}"
     state: absent
@@ -445,10 +455,11 @@
     - ssh_groups
     - ssh_users
 
-- name: root manages authorized keys for each user
+- name: root manages authorized keys for ssh_users
   when:
     - distribute_ssh_keys is defined and distribute_ssh_keys|bool
     - item.group == 'wheel' or item.group == 'staff' or item.group == 'users'
+    - ssh_users is defined
   copy:
     dest: /etc/ssh/authorized_keys/{{ item.username }}
     src: "pubkeys/{{ item.username }}"
@@ -462,7 +473,9 @@
     - ssh_users
 
 - name: ensure all keys of non_users are removed
-  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  when:
+    - distribute_ssh_keys is defined and distribute_ssh_keys|bool
+    - non_users is defined
   file:
     dest: "/etc/ssh/authorized_keys/{{ item }}"
     state: absent
@@ -472,7 +485,9 @@
     - non_users
 
 - name: ensure all non_users are removed
-  when: manage_ssh_users is defined and manage_ssh_users|bool
+  when:
+    - manage_ssh_users is defined and manage_ssh_users|bool
+    - non_users is defined
   user:
     name: "{{ item }}"
     state: absent
@@ -484,7 +499,9 @@
     - non_users
 
 - name: lock central authorized_keys files for writing
-  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  when:
+    - distribute_ssh_keys is defined and distribute_ssh_keys|bool
+    - ssh_users is defined
   shell: chattr +i /etc/ssh/authorized_keys/*
   changed_when: false  # it is a toggle
   ignore_errors: true
@@ -492,8 +509,10 @@
     - ssh_users
     - non_users
 
-- name: ensure users have no authorized_keys in their homedir
-  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+- name: ensure ssh_users have no authorized_keys in their homedir
+  when:
+    - distribute_ssh_keys is defined and distribute_ssh_keys|bool
+    - ssh_users is defined
   file:
     state: absent
     path: "{{ item }}/.ssh/authorized_keys"
