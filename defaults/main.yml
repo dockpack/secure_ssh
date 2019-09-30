@@ -17,12 +17,10 @@ manage_ssh_groups: false
 
 # The wheel group is used in files/sudoers/user_sudo
 ssh_groups:
-  with_items:
-    - wheel
-    - staff
-    - users
-    - games
-    - chroot
+  - wheel
+  - staff
+  - users
+  - chroot
 
 # adds all in 'ssh_users:' removes all 'non_users:'
 manage_ssh_users: false
@@ -34,6 +32,14 @@ ssh_users:
     shell: /bin/bash
     group: wheel
     seuser: unconfined_u
+  - username: admin
+    shell: /bin/bash
+    group: wheel
+    seuser: staff_
+  - username: download
+    shell: /sbin/nologin
+    group: chroot
+    seuser: guest_
 # This dict should contain at least one entry like default accounts
 non_users:
   - games
