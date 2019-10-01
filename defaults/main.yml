@@ -5,7 +5,7 @@ secure_ssh_dropzone: false
 # Allow Signed SSH keys, place your CA key in ansible/files
 signed_ssh_keys: true
 # set AuthorizedKeysFile /dev/null to rely on signed key exclusively
-
+TrustedUserCAKeys: 'trusted-user-ca-keys.pub'
 # Please read the tasks before changing
 distribute_ssh_keys: true
 
@@ -17,9 +17,7 @@ manage_ssh_groups: false
 
 # The wheel group is used in files/sudoers/user_sudo
 ssh_groups:
-  - wheel
   - staff
-  - users
   - chroot
 
 # adds all in 'ssh_users:' removes all 'non_users:'
@@ -32,14 +30,7 @@ ssh_users:
     shell: /bin/bash
     group: wheel
     seuser: unconfined_u
-  - username: admin
-    shell: /bin/bash
-    group: wheel
-    seuser: staff_
-  - username: download
-    shell: /sbin/nologin
-    group: chroot
-    seuser: guest_
+
 # This dict should contain at least one entry like default accounts
 non_users:
   - games

@@ -5,8 +5,7 @@
 
 ## Secure Shell
 
-Generate a strong SSH keypair with a strong passphrase, and store the passphrase in your Keychain. 
-This means that your SSH private key is safely secured in your Mac's Keychain, plus you will never need to type the passphrase.
+Generate a strong SSH keypair with a strong passphrase, and store the passphrase in your Keychain. This means that your SSH private key is safely secured in your Mac's Keychain, plus you will never need to type the passphrase.
 
 ```sh
 ssh-keygen -t rsa -b 4096
@@ -29,6 +28,33 @@ To do this open Terminal and enter:
 ```sh
 open -a textedit ~/.ssh/config
 ```
+
+## CA Signed SSH keys
+
+When you want to manage user's access out-of-bound, then you don't want to
+install their public key in authorized_keys files on the servers they need to access. You can create a Certificate Signing Authority for Secure Shell (different from X509 TLS/SSL) by creating an ssh keypair. The public key is installed on all servers, and that is the only file that needs to be there. (You can have 2 CA keys or more if you need.)
+
+```
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/ca_ssh
+cat ~/.ssh/ca_ssh.pub >> playbook_dir/files/ssh/trusted-user-ca-keys.pub
+```
+
+This role copies the file to the servers and adds it to **/etc/ssh/sshd_config**:
+`TrustedUserCAKeys /etc/ssh/trusted-user-ca-keys.pub`
+
+
+# Granting Access
+To sign Fred's public key (fred.pub) to grant one week access to sftp://download@server and log as customer in /var/log/secure, run this
+command and send the fred.pub-cert file back to Fred.
+
+```
+ssh-keygen -s ~/.ssh/ca_ssh -I customer -n download -V +1w fred.pub
+```
+
+# Revoking keys
+Add public keys of people that should no longer login to:
+- playbook_dir/files/ssh/revoked\_keys
+
 
 # Passwords are bad.
 

@@ -15,27 +15,23 @@ Key Management Requires Attention
 ---------------------------------
 
 `distribute_ssh_keys: true`
-In any larger organization, use of SSH key management solutions is almost necessary. SSH keys should also be moved to root-owned locations with proper provisioning and termination processes. Users will not be able to modify their pubkey because the immutable file attribute is set.
+In any larger organization, use of SSH key management solutions is almost
+necessary. SSH keys should also be moved to root-owned locations with proper provisioning and termination processes. Users will not be able to modify their
+pubkey because the immutable file attribute is set.
 
 ` AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'`
 
 
 Hashicorp Vault
 ---------------
-This role can be used to manage access to SSH by the means of signed ssh keys, and to sftp with OTP.
+This role can be used to manage access to SSH by the means of signed ssh keys,
+and to sftp with OTP.
 
 Signed SSH keys
 ---------------
 
+See SECURITY.md
 
-`signed_ssh_keys: true`
-
-you need to have a CA pubkey signed by Vault (or your own implementation) in
-`files/trusted-user-ca-keys.pem` next to your playbook.
-
-To rely on signed key exclusively set:
-
-`AuthorizedKeysFile: /dev/null`
 
 To manage groups  without IAM, LDAP, AD.
 ----------------------------------------
@@ -52,10 +48,11 @@ ssh_groups:
     - chroot
 ```
 
-To manage users without IAM, LDAP, AD.
+Manage users without IAM, LDAP, AD.
 --------------------------------------
 `manage_ssh_users: true` # Default is false.
 Adds all users in 'ssh_users:' removes all 'non_users:'
+Check the defaults/main.yml
 
 ```
 ssh_users:
