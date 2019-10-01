@@ -19,13 +19,13 @@
         shell: /bin/bash
         group: wheel
         seuser: unconfined_u
-      - username: vola
+      - username: admin
         shell: /bin/bash
         group: wheel
         seuser: staff_u
-      - username: guest
-        shell: /bin/bash
-        group: games
+      - username: download
+        shell: /sbin/nologin
+        group: chroot
         seuser: guest_u
       - username: kiosk
         shell: /bin/bash

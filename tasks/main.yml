@@ -118,11 +118,11 @@
   tags:
     - sudoers
 
-- name: install trusted-user-ca-keys.pem
+- name: install trusted-user-ca-keys.pub
   when: signed_ssh_keys is defined and signed_ssh_keys|bool
   copy:
-    src: trusted-user-ca-keys.pem
-    dest: /etc/ssh/trusted-user-ca-keys.pem
+    src: "ssh/{{ TrustedUserCAKeys|default('trusted-user-ca-keys.pub') }}"
+    dest: "/etc/ssh/{{ TrustedUserCAKeys }}"
     owner: root
     group: root
     mode: 0644
@@ -133,7 +133,7 @@
 - name: manage revoked_keys
   when: signed_ssh_keys is defined and signed_ssh_keys|bool
   copy:
-    src: revoked_keys
+    src: ssh/revoked_keys
     dest: /etc/ssh/revoked_keys
     owner: root
     group: root
@@ -153,7 +153,7 @@
     state: present
   with_items:
     - regexp: '^(#)?TrustedUserCAKeys'
-      line: "TrustedUserCAKeys {{ TrustedUserCAKeys }}"
+      line: "TrustedUserCAKeys /etc/ssh/{{ TrustedUserCAKeys }}"
     - regexp: '^(#)?RevokedKeys'
       line: "RevokedKeys /etc/ssh/revoked_keys"
 
@@ -204,7 +204,7 @@
     - regexp: '^(#)?KerberosAuthentication'
       line: "KerberosAuthentication {{ KerberosAuthentication }}"
     - regexp: '^(#)?RhostsRSAAuthentication'
-      line: "RhostsRSAAuthentication no"
+      line: "#RhostsRSAAuthentication no"
     - regexp: '^ChallengeResponseAuthentication'
       line: |
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
@@ -284,6 +284,25 @@
   notify: restart sshd
   tags:
     - config
+
+- name: Replace SFTP server subsystem
+  replace:
+    dest: /etc/ssh/sshd_config
+    regexp: '.*Subsystem.*sftp.*/usr/libexec/openssh/sftp-server$'
+    replace: 'Subsystem       sftp    internal-sftp'
+  notify: restart sshd
+
+- name: Configure chroot group
+  blockinfile:
+    path: /etc/ssh/sshd_config
+    insertafter: EOF
+    block: |
+      Match group chroot
+        ChrootDirectory /home/
+        X11Forwarding no
+        AllowTcpForwarding no
+        ForceCommand internal-sftp
+  notify: restart sshd
 
 - name: ensure permissions on /etc/ssh/sshd_config are restricted
   file:
@@ -372,7 +391,7 @@
     - ssh_users
     - non_users
 
-- name: create ssh_groups like wheel, staff and users
+- name: create ssh_groups like chroot, staff and users
   when: manage_ssh_groups is defined and manage_ssh_groups|bool
   group:
     system: true
