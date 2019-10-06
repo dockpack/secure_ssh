@@ -9,6 +9,17 @@
   tags:
     - firewall
 
+- name: ensure role dependencies are installed
+  package:
+    name:
+      - authconfig
+      - policycoreutils-python
+      - unzip
+      - xorg-x11-xauth
+    state: present
+  tags:
+    - authconfig
+
 - name: firewalld configuration ssh
   when: secure_ssh_dropzone|bool
   firewalld:
@@ -31,16 +42,27 @@
   tags:
     - firewall
 
-- name: ensure role dependencies are installed
-  package:
-    name:
-      - authconfig
-      - policycoreutils-python
-      - unzip
-      - xorg-x11-xauth
-    state: present
-  tags:
-    - authconfig
+- name: firewall the ports
+  when: "item is defined and item != 22"
+  firewalld:
+    port: '{{ item }}/tcp'
+    permanent: true
+    state: enabled
+    immediate: true
+  with_items:
+    - "{{ secure_ssh_port }}"
+    - "{{ secure_high_port }}"
+
+- name: Change the ports in SELinux
+  when: "item is defined and item != '22'"
+  seport:
+    ports: "{{ item }}"
+    proto: "tcp"
+    setype: "ssh_port_t"
+    state: "present"
+  with_items:
+    - "{{ secure_ssh_port }}"
+    - "{{ secure_high_port }}"
 
 - name: remove fail2ban
   when: not secure_ssh_fail2ban|bool
@@ -118,7 +140,7 @@
   tags:
     - sudoers
 
-- name: install trusted-user-ca-keys.pub
+- name: install TrustedUserCAKeys
   when: signed_ssh_keys is defined and signed_ssh_keys|bool
   copy:
     src: "ssh/{{ TrustedUserCAKeys|default('trusted-user-ca-keys.pub') }}"
@@ -205,7 +227,7 @@
       line: "KerberosAuthentication {{ KerberosAuthentication }}"
     - regexp: '^(#)?RhostsRSAAuthentication'
       line: "#RhostsRSAAuthentication no"
-    - regexp: '^ChallengeResponseAuthentication'
+    - regexp: '^(#)?ChallengeResponseAuthentication'
       line: |
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
     - regexp: '^UsePAM'
@@ -214,8 +236,10 @@
       line: "X11Forwarding yes"
     - regexp: '^(#)?X11UseLocalhost'
       line: "X11UseLocalhost no"
-    - regexp: '^(#)?Port'
-      line: "Port {{ Port }}"
+    - regexp: '^(#)?AddressFamily'
+      line: "AddressFamily {{ AddressFamily }}"
+    - regexp: '^(#)?Compression'
+      line: 'Compression {{ Compression }}'
     - regexp: "^(#)?Protocol"
       line: "Protocol 2"
     - regexp: '^(#)?AllowAgentForwarding'
@@ -238,6 +262,8 @@
       line: 'Banner /etc/issue.net'
     - regexp: '^(#)?HostbasedAuthentication'
       line: "HostbasedAuthentication no"
+    - regexp: '^(#)?IgnoreUserKnownHosts'
+      line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?TCPKeepAlive'
       line: "TCPKeepAlive {{ TCPKeepAlive }}"
     - regexp: '^(#)?ClientAliveInterval'
@@ -257,6 +283,29 @@
     - config
     - banner
 
+- name: SSH extra port configuration(s)
+  when:
+    - secure_ssh_port != secure_high_port
+    - secure_ssh_port != 22 or secure_high_port != 22
+  blockinfile:
+    dest: /etc/ssh/sshd_config
+    insertafter: '^#Port 22'
+    marker: '# {mark} ANSIBLE MANAGED PORTS'
+    block: |
+      Port {{ secure_high_port }}
+      Port {{ secure_ssh_port }}
+  notify: restart sshd
+
+- name:  SSH port configuration
+  when:
+    - secure_ssh_port == 22 or secure_high_port == 22
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^(#)?Port'
+    line: "Port {{ secure_ssh_port }}"
+    state: present
+  notify: restart sshd
+
 - name: Optional SSH configuration
   when: secure_ssh_optional|bool
   lineinfile:
@@ -265,18 +314,12 @@
     line: "{{ item.line }}"
     state: present
   with_items:
-    - regexp: '^(#)?AddressFamily'
-      line: "AddressFamily {{ AddressFamily }}"
     - regexp: '^(#)?MaxAuthTries \d'
       line: "MaxAuthTries {{ MaxAuthTries | default('10') }}"
     - regexp: '^(#)?MaxSessions'
       line: "MaxSessions {{ MaxSessions }}"
     - regexp: '^(#)?StrictModes'
       line: 'StrictModes yes'
-    - regexp: '^(#)?Compression'
-      line: 'Compression {{ Compression }}'
-    - regexp: '^(#)?IgnoreUserKnownHosts'
-      line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?PermitUserEnvironment'
       line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
     - regexp: '^(#)?HostKeyAlgorithms'
@@ -286,6 +329,7 @@
     - config
 
 - name: Replace SFTP server subsystem
+  when: chroot_sftp_server|bool
   replace:
     dest: /etc/ssh/sshd_config
     regexp: '.*Subsystem.*sftp.*/usr/libexec/openssh/sftp-server$'
@@ -293,7 +337,9 @@
   notify: restart sshd
 
 - name: Configure chroot group
+  when: chroot_sftp_server|bool
   blockinfile:
+    marker: '# {mark} ANSIBLE MANAGED CONFIG'
     path: /etc/ssh/sshd_config
     insertafter: EOF
     block: |
@@ -315,8 +361,15 @@
   tags:
     - config
 
+- name: check if /etc/ssh/moduli contains weak Diffie-Hellman parameters
+  shell: awk '$5 < 2048' /etc/ssh/moduli
+  register: sshd_register_moduli
+  changed_when: false
+  check_mode: false
+
 - name: deactivate short Diffie-Hellman moduli
-  shell: "awk '$5 >= 3071' /etc/ssh/moduli > /etc/ssh/moduli.tmp && mv -f /etc/ssh/moduli.tmp /etc/ssh/moduli"
+  when: sshd_register_moduli.stdout
+  shell: "awk '$5 >= 2048' /etc/ssh/moduli > /etc/ssh/moduli.tmp && mv -f /etc/ssh/moduli.tmp /etc/ssh/moduli"
   tags:
     - skip_ansible_lint
 
@@ -527,18 +580,6 @@
   tags:
     - ssh_users
     - non_users
-
-- name: ensure ssh_users have no authorized_keys in their homedir
-  when:
-    - distribute_ssh_keys is defined and distribute_ssh_keys|bool
-    - ssh_users is defined
-  file:
-    state: absent
-    path: "{{ item }}/.ssh/authorized_keys"
-  with_items:
-    - "{{ ssh_users }}"
-  tags:
-    - ssh_users
 
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet

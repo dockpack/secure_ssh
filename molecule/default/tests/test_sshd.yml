@@ -1,0 +1,76 @@
+---
+file:
+  /etc/issue:
+    exists: true
+    mode: "0644"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+  /etc/issue.net:
+    exists: true
+    mode: "0644"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+  /etc/motd:
+    exists: true
+    mode: "0644"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+  /etc/ssh/authorized_keys:
+    exists: true
+    mode: "0711"
+    owner: root
+    group: root
+    filetype: directory
+    contains: []
+  /etc/ssh/moduli:
+    exists: true
+    mode: "0644"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+  /etc/ssh/sshd_config:
+    exists: true
+    mode: "0600"
+    owner: root
+    group: root
+    filetype: file
+    contains: []
+package:
+  firewalld:
+    installed: true
+port:
+  tcp:ftp:
+    listening: false
+    ip: []
+  tcp:telnet:
+    listening: false
+    ip: []
+service:
+  firewalld:
+    enabled: true
+    running: true
+  sshd:
+    enabled: true
+    running: true
+user:
+  sshd:
+    exists: true
+    groups:
+      - sshd
+    home: /var/empty/sshd
+    shell: /sbin/nologin
+group:
+  sshd:
+    exists: true
+process:
+  firewalld:
+    running: true
+  sshd:
+    running: true

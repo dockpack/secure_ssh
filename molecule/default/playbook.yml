@@ -12,7 +12,8 @@
     distribute_ssh_keys: true
     # Change from user private groups to 'ssh_groups:'
     manage_ssh_groups: true
-    # Confine users to seuser classes
+    # Confine users to seuser classes not idempotent
+    semanage_ssh_users: false
     manage_ssh_users: true
     ssh_users:
       - username: vagrant

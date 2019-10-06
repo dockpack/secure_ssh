@@ -8,6 +8,7 @@
   notify:
     - check sshd configuration
     - restart sshd - after config check
+    - cleanup authorized_keys
 
 - name: check sshd configuration
   command: '/usr/sbin/sshd -t'
@@ -30,3 +31,15 @@
     name: fail2ban
     state: restarted
     daemon_reload: true
+
+- name: cleanup authorized_keys
+  when:
+    - distribute_ssh_keys is defined and distribute_ssh_keys|bool
+    - ssh_users is defined
+  file:
+    state: absent
+    path: "/home/{{ item.username }}/.ssh/authorized_keys"
+  with_items:
+    - "{{ ssh_users }}"
+  tags:
+    - ssh_users
