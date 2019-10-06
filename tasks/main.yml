@@ -140,7 +140,7 @@
   tags:
     - sudoers
 
-- name: install trusted-user-ca-keys.pub
+- name: install TrustedUserCAKeys
   when: signed_ssh_keys is defined and signed_ssh_keys|bool
   copy:
     src: "ssh/{{ TrustedUserCAKeys|default('trusted-user-ca-keys.pub') }}"
@@ -289,11 +289,21 @@
     - secure_ssh_port != 22 or secure_high_port != 22
   blockinfile:
     dest: /etc/ssh/sshd_config
-    regexp: '^(#)?Port'
+    insertafter: '^#Port 22'
     marker: '# {mark} ANSIBLE MANAGED PORTS'
     block: |
-      Port {{ secure_ssh_port }}
       Port {{ secure_high_port }}
+      Port {{ secure_ssh_port }}
+  notify: restart sshd
+
+- name:  SSH port configuration
+  when:
+    - secure_ssh_port == 22 or secure_high_port == 22
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^(#)?Port'
+    line: "Port {{ secure_ssh_port }}"
+    state: present
   notify: restart sshd
 
 - name: Optional SSH configuration
