@@ -291,7 +291,7 @@
     dest: /etc/ssh/sshd_config
     regexp: '^(#)?Port'
     marker: '# {mark} ANSIBLE MANAGED PORTS'
-    block: >
+    block: |
       Port {{ secure_ssh_port }}
       Port {{ secure_high_port }}
   notify: restart sshd
