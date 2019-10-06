@@ -568,18 +568,6 @@
     - ssh_users
     - non_users
 
-- name: ensure ssh_users have no authorized_keys in their homedir
-  when:
-    - distribute_ssh_keys is defined and distribute_ssh_keys|bool
-    - ssh_users is defined
-  file:
-    state: absent
-    path: "/home/{{ item.username }}/.ssh/authorized_keys"
-  with_items:
-    - "{{ ssh_users }}"
-  tags:
-    - ssh_users
-
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
