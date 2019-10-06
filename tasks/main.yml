@@ -285,8 +285,8 @@
 
 - name: SSH extra port configuration(s)
   when:
-    - secure_ssh_port is defined and secure_ssh_port != 22
-    - secure_high_port is defined and secure_high_port != 22
+    - secure_ssh_port != secure_high_port
+    - secure_ssh_port != 22 or secure_high_port != 22
   blockinfile:
     dest: /etc/ssh/sshd_config
     regexp: '^(#)?Port'
