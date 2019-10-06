@@ -238,6 +238,8 @@
       line: "X11UseLocalhost no"
     - regexp: '^(#)?AddressFamily'
       line: "AddressFamily {{ AddressFamily }}"
+    - regexp: '^(#)?Compression'
+      line: 'Compression {{ Compression }}'
     - regexp: "^(#)?Protocol"
       line: "Protocol 2"
     - regexp: '^(#)?AllowAgentForwarding'
@@ -306,8 +308,6 @@
       line: "MaxSessions {{ MaxSessions }}"
     - regexp: '^(#)?StrictModes'
       line: 'StrictModes yes'
-    - regexp: '^(#)?Compression'
-      line: 'Compression {{ Compression }}'
     - regexp: '^(#)?PermitUserEnvironment'
       line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
     - regexp: '^(#)?HostKeyAlgorithms'
