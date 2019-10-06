@@ -290,6 +290,7 @@
   blockinfile:
     dest: /etc/ssh/sshd_config
     regexp: '^(#)?Port'
+    # {mark} ANSIBLE MANAGED PORTS
     block: >
       Port {{ secure_ssh_port }}
       Port {{ secure_high_port }}
@@ -327,6 +328,7 @@
 - name: Configure chroot group
   when: chroot_sftp_server|bool
   blockinfile:
+    # {mark} ANSIBLE MANAGED CONFIG
     path: /etc/ssh/sshd_config
     insertafter: EOF
     block: |
