@@ -296,7 +296,7 @@
       Port {{ secure_ssh_port }}
   notify: restart sshd
 
-- name:  SSH port configuration
+- name: SSH port configuration
   when:
     - secure_ssh_port == 22 or secure_high_port == 22
   lineinfile:
