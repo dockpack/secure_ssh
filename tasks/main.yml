@@ -210,6 +210,24 @@
   tags:
     - banner
 
+- name: Relax SSH keys location, managed by user
+  when: distribute_ssh_keys is not defined or not distribute_ssh_keys
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^(#)?AuthorizedKeysFile'
+    line: "#AuthorizedKeysFile"
+    state: present
+  notify: restart sshd
+
+- name: Harden SSH keys location, managed by root
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^(#)?AuthorizedKeysFile'
+    line: "AuthorizedKeysFile {{ AuthorizedKeysFile }}"
+    state: present
+  notify: restart sshd
+
 - name: Harden SSH configuration
   lineinfile:
     dest: /etc/ssh/sshd_config
@@ -248,8 +266,6 @@
       line: "AllowTcpForwarding {{ AllowTcpForwarding }}"
     - regexp: '^(#)?PrintLastLog'
       line: "PrintLastLog yes"
-    - regexp: '^(#)?AuthorizedKeysFile'
-      line: "AuthorizedKeysFile {{ AuthorizedKeysFile }}"
     - regexp: '^(#)?PasswordAuthentication'
       line: "PasswordAuthentication {{ PasswordAuthentication }}"
     - regexp: '^(#)?PermitEmptyPasswords'
