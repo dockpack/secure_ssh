@@ -251,7 +251,7 @@
     - regexp: '^UsePAM'
       line: 'UsePAM yes'
     - regexp: '^(#)?X11Forwarding'
-      line: "X11Forwarding yes"
+      line: "X11Forwarding {{ X11Forwarding }}"
     - regexp: '^(#)?X11UseLocalhost'
       line: "X11UseLocalhost no"
     - regexp: '^(#)?AddressFamily'
