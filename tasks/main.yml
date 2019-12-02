@@ -345,7 +345,7 @@
     - config
 
 - name: Replace SFTP server subsystem
-  when: chroot_sftp_server|bool
+  when: chroot_sftp_group|bool
   replace:
     dest: /etc/ssh/sshd_config
     regexp: '.*Subsystem.*sftp.*/usr/libexec/openssh/sftp-server$'
@@ -353,9 +353,9 @@
   notify: restart sshd
 
 - name: Configure chroot group
-  when: chroot_sftp_server|bool
+  when: chroot_sftp_group|bool
   blockinfile:
-    marker: '# {mark} ANSIBLE MANAGED CONFIG'
+    marker: '# {mark} ANSIBLE MANAGED chroot_sftp_group'
     path: /etc/ssh/sshd_config
     insertafter: EOF
     block: |
@@ -365,6 +365,23 @@
         AllowTcpForwarding no
         ForceCommand internal-sftp
   notify: restart sshd
+
+- name: Configure chroot group
+  when: chroot_sftp_users|bool
+  blockinfile:
+    marker: '# {mark} ANSIBLE MANAGED chroot_sftp_users'
+    path: /etc/ssh/sshd_config
+    insertafter: EOF
+    block: |
+      Match user {{ item }}
+        ChrootDirectory /home/{{ item }}
+        X11Forwarding no
+        AllowTcpForwarding no
+        ForceCommand internal-sftp
+  with_items: "{{ sftp_users }}"
+  notify: restart sshd
+  tags:
+    - sftp_users
 
 - name: ensure permissions on /etc/ssh/sshd_config are restricted
   file:
@@ -470,6 +487,86 @@
   tags:
     - ssh_groups
 
+###
+- name: ensure the people in sftp_users have a user created
+  when:
+    - chroot_sftp_users is defined
+    - chroot_sftp_users|bool
+    - sftp_users is defined
+  user:
+    name: "{{ item }}"
+    group: sftp_users
+    seuser: guest_u
+    create_home: true
+    password_lock: true
+    shell: /sbin/nologin
+    state: present
+  with_items:
+    - "{{ sftp_users }}"
+  tags:
+    - sftp_users
+
+- name: ensure the people in sftp_users have a seuser type
+  when:
+    - chroot_sftp_users is defined
+    - chroot_sftp_users|bool
+    - sftp_users is defined
+  command: "semanage login -a -s {{ item.seuser | default('guest_u') }} {{ item }}"
+  with_items: "{{ sftp_users }}"
+  register: sftp_seuser
+  failed_when: sftp_seuser.rc|int > 1
+  tags:
+    - sftp_users
+
+- name: ensure the people in sftp_users just see their folder
+  when:
+    - chroot_sftp_users is defined
+    - chroot_sftp_users|bool
+    - sftp_users is defined
+  file:
+    name: "/home/"
+    owner: root
+    group: root
+    mode: 0711
+    state: directory
+  with_items:
+    - "{{ sftp_users }}"
+  tags:
+    - sftp_users
+
+- name: ensure the people in sftp_users have a readonly homedir
+  when:
+    - chroot_sftp_users is defined
+    - chroot_sftp_users|bool
+    - sftp_users is defined
+  file:
+    name: "/home/{{ item }}"
+    owner: "{{ item }}"
+    group: root
+    mode: 0500
+    state: directory
+  with_items:
+    - "{{ sftp_users }}"
+  tags:
+    - sftp_users
+
+- name: ensure the people in sftp_users have a upload folder
+  when:
+    - chroot_sftp_users is defined
+    - chroot_sftp_users|bool
+    - sftp_users is defined
+  file:
+    name: "/home/{{ item }}/upload"
+    owner: "{{ item }}"
+    group: root
+    mode: 0700
+    state: directory
+  with_items:
+    - "{{ sftp_users }}"
+  tags:
+    - sftp_users
+
+###
 - name: ensure the people in ssh_users have a user created with options
   when:
     - manage_ssh_users is defined and manage_ssh_users|bool
