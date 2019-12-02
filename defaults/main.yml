@@ -2,15 +2,16 @@
 secure_ssh_optional: false
 secure_ssh_fail2ban: false
 secure_ssh_dropzone: false
-# Allow Signed SSH keys, place your CA key in ansible/files
+# Allow Signed SSH keys, place your CA key in ansible/files/ssh/trusted-user-ca-keys.pub
 signed_ssh_keys: true
-# set AuthorizedKeysFile /dev/null to rely on signed key exclusively
 TrustedUserCAKeys: 'trusted-user-ca-keys.pub'
+
 # Please read the tasks before changing
 distribute_ssh_keys: true
 
 # Users will not be able to modify their pubkey
 AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
+# set AuthorizedKeysFile /dev/null to rely on signed key exclusively
 
 # Change from user private groups to 'ssh_groups:'
 manage_ssh_groups: false
