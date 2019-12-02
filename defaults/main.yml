@@ -15,8 +15,13 @@ AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
 
 # Change from user private groups to 'ssh_groups:'
 manage_ssh_groups: false
+
+## Pick one of these two, or none
 # Run a sftp server with a chroot group
-chroot_sftp_server: true
+chroot_sftp_group: false
+# Run a sftp server with chrooted users
+chroot_sftp_users: false
+
 # Expose the high port on the internet, use the low for management
 secure_ssh_port: 22
 secure_high_port: 22666
@@ -26,6 +31,7 @@ ssh_groups:
   - users
   - staff
   - chroot
+  - sftp_users
 
 # adds all in 'ssh_users:' removes all 'non_users:'
 manage_ssh_users: false
@@ -43,6 +49,9 @@ ssh_users:
     shell: /bin/bash
     group: wheel
     seuser: unconfined_u
+sftp_users:
+  - download
+
 
 # The seuser property helps to confine users to policy classes
 semanage_ssh_users: true
