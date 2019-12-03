@@ -282,6 +282,8 @@
       line: 'IgnoreUserKnownHosts {{ IgnoreUserKnownHosts }}'
     - regexp: '^(#)?TCPKeepAlive'
       line: "TCPKeepAlive {{ TCPKeepAlive }}"
+    - regexp: '^(#)?PermitUserEnvironment'
+      line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
     - regexp: '^(#)?ClientAliveInterval'
       line: "ClientAliveInterval {{ ClientAliveInterval }}"
     - regexp: '^(#)?ClientAliveCountMax'
@@ -336,8 +338,6 @@
       line: "MaxSessions {{ MaxSessions }}"
     - regexp: '^(#)?StrictModes'
       line: 'StrictModes yes'
-    - regexp: '^(#)?PermitUserEnvironment'
-      line: "PermitUserEnvironment {{ PermitUserEnvironment }}"
     - regexp: '^(#)?HostKeyAlgorithms'
       line: "HostKeyAlgorithms {{ HostKeyAlgorithms }}"
   notify: restart sshd
