@@ -67,7 +67,6 @@ semanage_ssh_users: true
 # Recommended
 AllowTcpForwarding: 'yes'
 AllowAgentForwarding: 'yes'
-X11Forwarding: 'no'
 PasswordAuthentication: 'no'
 GSSAPIAuthentication: 'no'
 KerberosAuthentication: 'no'
