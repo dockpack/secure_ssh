@@ -1,7 +1,7 @@
 ---
 secure_ssh_optional: false
 secure_ssh_fail2ban: false
-secure_ssh_dropzone: false
+secure_ssh_dropzone: true
 # Allow Signed SSH keys, place your CA key in ansible/files/ssh/trusted-user-ca-keys.pub
 signed_ssh_keys: true
 TrustedUserCAKeys: 'trusted-user-ca-keys.pub'
@@ -80,7 +80,7 @@ LoginGraceTime: '60'
 LogLevel: VERBOSE
 TCPKeepAlive: 'no'
 ClientAliveInterval: 30
-ClientAliveCountMax: 3600
+ClientAliveCountMax: 0
 Compression: delayed
 #Ciphers: chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
 Ciphers: aes256-ctr,aes192-ctr,aes128-ctr
