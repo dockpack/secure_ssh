@@ -20,6 +20,15 @@
   tags:
     - authconfig
 
+- name: ensure xorg-x11-xauth is installed
+  when: X11Forwarding == 'yes'
+  package:
+    name:
+      - xorg-x11-xauth
+    state: present
+  tags:
+    - authconfig
+
 - name: firewalld configuration ssh
   when: secure_ssh_dropzone|bool
   firewalld:

@@ -41,6 +41,10 @@ non_users:
   - games
   - ftp
 
+# Disable X11 forwarding unless there is an operational requirement to use X11
+# applications directly.
+X11Forwarding: 'no'
+
 # add your users to group_vars or host_vars.
 # do not delete users that left, just comment the lines.
 # staff, wheel and users groups need signed_ssh_keys or a public ssh key in files.
@@ -75,6 +79,7 @@ MaxAuthTries: 4
 StrictModes: 'yes'
 MaxSessions: 10
 PermitUserEnvironment: 'no'
+
 LoginGraceTime: '60'
 # LogLevel VERBOSE logs user's key fingerprint on login. Needed to have a clear audit track of which key was using to log in.
 LogLevel: VERBOSE
