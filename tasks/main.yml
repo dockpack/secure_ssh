@@ -272,6 +272,8 @@
       line: "PermitEmptyPasswords no"
     - regexp: '^(#)?PermitRootLogin'
       line: "PermitRootLogin {{ PermitRootLogin }}"
+    - regexp: '^(#)?MaxAuthTries \d'
+      line: "MaxAuthTries {{ MaxAuthTries | default('4') }}"
     - regexp: '^(#)?IgnoreRhosts'
       line: 'IgnoreRhosts yes'
     - regexp: '^(#)?Banner'
@@ -332,8 +334,6 @@
     line: "{{ item.line }}"
     state: present
   with_items:
-    - regexp: '^(#)?MaxAuthTries \d'
-      line: "MaxAuthTries {{ MaxAuthTries | default('10') }}"
     - regexp: '^(#)?MaxSessions'
       line: "MaxSessions {{ MaxSessions }}"
     - regexp: '^(#)?StrictModes'
