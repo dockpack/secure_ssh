@@ -3,7 +3,6 @@
 # Don't be stupid
 PermitEmptyPasswords: 'no'
 PermitRootLogin: 'no'
-X11Forwarding: 'yes'
 
 # Reduce brute-force attacks
 PubkeyAuthentication: 'yes'
