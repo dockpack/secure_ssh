@@ -158,6 +158,13 @@
   tags:
     - sudoers
 
+- name: assign ssh_groups to AllowGroups
+  when: manage_ssh_groups is defined and manage_ssh_groups|bool
+  set_fact:
+     AllowGroups: "{{ ssh_groups | join(',') }}"
+  tags:
+    - ssh_groups
+
 - name: install TrustedUserCAKeys
   when: signed_ssh_keys is defined and signed_ssh_keys|bool
   copy:
@@ -268,6 +275,8 @@
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
     - regexp: '^UsePAM'
       line: 'UsePAM yes'
+    - regexp: '^(#)?AllowGroups'
+      line: "AllowGroups {{ AllowGroups }}"
     - regexp: '^(#)?X11Forwarding'
       line: "X11Forwarding {{ X11Forwarding }}"
     - regexp: '^(#)?X11UseLocalhost'
@@ -295,7 +304,7 @@
     - regexp: '^(#)?IgnoreRhosts'
       line: 'IgnoreRhosts yes'
     - regexp: '^(#)?Banner'
-      line: 'Banner /etc/issue.net'
+      line: 'Banner /etc/issue'
     - regexp: '^(#)?HostbasedAuthentication'
       line: "HostbasedAuthentication no"
     - regexp: '^(#)?IgnoreUserKnownHosts'
