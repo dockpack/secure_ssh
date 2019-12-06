@@ -43,6 +43,22 @@ non_users:
   - games
   - ftp
 
+# Ensure system accounts are /sbin/nologin
+# set shell field in the password file and lock the shadow password field
+nologin_users:
+  - bin
+  - daemon
+  - adm
+  - lp
+  - mail
+  - operator
+  - games
+  - ftp
+  - nobody
+  - halt
+  - shutdown
+  - sync
+
 # Disable X11 forwarding unless there is an operational requirement to use X11
 # applications directly.
 X11Forwarding: 'no'

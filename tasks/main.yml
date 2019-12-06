@@ -721,6 +721,18 @@
     - ssh_users
     - non_users
 
+- name: ensure system accounts are non-login
+  when: nologin_users is defined
+  user:
+    name: "{{ item }}"
+    shell: '/sbin/nologin'
+    password_lock: true
+    force: true
+  with_items:
+    - "{{ nologin_users }}"
+  tags:
+    - nologin_users
+
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
