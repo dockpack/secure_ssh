@@ -420,6 +420,7 @@
   notify: restart sshd
   tags:
     - config
+    - permissions
 
 - name: check if /etc/ssh/moduli contains weak Diffie-Hellman parameters
   shell: awk '$5 < 2048' /etc/ssh/moduli
