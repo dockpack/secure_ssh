@@ -33,6 +33,8 @@ ssh_groups:
   - chroot
   - sftp_users
 
+AllowGroups: wheel,sftp_users,chroot
+
 # adds all in 'ssh_users:' removes all 'non_users:'
 manage_ssh_users: false
 
@@ -84,8 +86,11 @@ LoginGraceTime: '60'
 LogLevel: INFO
 # LogLevel VERBOSE logs user's key fingerprint on login. Needed to have a clear audit track of which key was using to log in.
 TCPKeepAlive: 'no'
-ClientAliveInterval: 900
+
+# While the recommended setting is 300 seconds (5 minutes), set this timeout value based on site policy.
+ClientAliveInterval: 300
 ClientAliveCountMax: 0
+
 Compression: delayed
 #Ciphers: chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
 Ciphers: aes256-ctr,aes192-ctr,aes128-ctr
