@@ -4,9 +4,10 @@
   become: true
   vars:
     # set ChallengeResponseAuthentication yes for use with Hashicorp Vault
+    # yamllint disable
     ChallengeResponseAuthentication: 'yes'
+    # yamllint enable
     hashicorp_vault_ssh: true
-
     signed_ssh_keys: false
     # Please read the tasks before enabling
     distribute_ssh_keys: true
@@ -15,6 +16,8 @@
     # Confine users to seuser classes not idempotent
     semanage_ssh_users: false
     manage_ssh_users: true
+    # staff, wheel and users groups need signed_ssh_keys,
+    # or a public ssh key in files/.
     ssh_users:
       - username: vagrant
         shell: /bin/bash
