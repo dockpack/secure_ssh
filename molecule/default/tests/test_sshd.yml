@@ -1,67 +1,96 @@
 ---
+
 file:
-  /etc/issue:
+  /etc/ssh/ssh_config:
     exists: true
     mode: "0644"
     owner: root
     group: root
     filetype: file
-    contains: []
-  /etc/issue.net:
+    contains:
+      - HashKnownHosts yes
+  /etc/ssh/ssh_host_ecdsa_key:
+    exists: true
+    mode: "0640"
+    owner: root
+    group: ssh_keys
+    filetype: file
+    contains:
+      - '-----BEGIN EC PRIVATE KEY-----'
+      - '-----END EC PRIVATE KEY-----'
+  /etc/ssh/ssh_host_ecdsa_key.pub:
     exists: true
     mode: "0644"
     owner: root
     group: root
     filetype: file
-    contains: []
-  /etc/motd:
+    contains:
+      - 'ecdsa-sha2-nistp256 '
+  /etc/ssh/ssh_host_ed25519_key:
+    exists: true
+    mode: "0640"
+    owner: root
+    group: ssh_keys
+    filetype: file
+    contains:
+      - '-----BEGIN OPENSSH PRIVATE KEY-----'
+      - '-----END OPENSSH PRIVATE KEY-----'
+  /etc/ssh/ssh_host_ed25519_key.pub:
     exists: true
     mode: "0644"
     owner: root
     group: root
     filetype: file
-    contains: []
-  /etc/ssh/authorized_keys:
+    contains:
+      - 'ssh-ed25519 '
+  /etc/ssh/ssh_host_rsa_key:
     exists: true
-    mode: "0711"
+    mode: "0640"
     owner: root
-    group: root
-    filetype: directory
-    contains: []
-  /etc/ssh/moduli:
+    group: ssh_keys
+    filetype: file
+    contains:
+      - '-----BEGIN RSA PRIVATE KEY-----'
+      - '-----END RSA PRIVATE KEY-----'
+  /etc/ssh/ssh_host_rsa_key.pub:
     exists: true
     mode: "0644"
     owner: root
     group: root
     filetype: file
-    contains: []
+    contains:
+      - 'ssh-rsa '
   /etc/ssh/sshd_config:
     exists: true
     mode: "0600"
     owner: root
     group: root
     filetype: file
-    contains: []
-package:
-  firewalld:
-    installed: true
+    contains:
+      - Ciphers aes256-ctr,aes192-ctr,aes128-ctr
+      - HostKey /etc/ssh/ssh_host_rsa_key
+      - HostKey /etc/ssh/ssh_host_ed25519_key
+      - PasswordAuthentication no
+      - PermitEmptyPasswords no
+      - PermitRootLogin no
+      - PermitUserEnvironment no
+      - PrintLastLog yes
+      - PubkeyAuthentication yes
+      - UsePAM yes
 port:
-  tcp:ftp:
-    listening: false
-    ip: []
-  tcp:telnet:
-    listening: false
-    ip: []
+  tcp:22:
+    listening: true
+    ip:
+      - 0.0.0.0
 service:
-  firewalld:
-    enabled: true
-    running: true
   sshd:
     enabled: true
     running: true
 user:
   sshd:
     exists: true
+    uid: 74
+    gid: 74
     groups:
       - sshd
     home: /var/empty/sshd
@@ -70,7 +99,5 @@ group:
   sshd:
     exists: true
 process:
-  firewalld:
-    running: true
   sshd:
     running: true
