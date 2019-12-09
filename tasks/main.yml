@@ -161,7 +161,7 @@
 - name: assign ssh_groups to AllowGroups
   when: manage_ssh_groups is defined and manage_ssh_groups|bool
   set_fact:
-    AllowGroups: "{{ ssh_groups | join(',') }}"
+    AllowGroups: "{{ ssh_groups | join(' ') }}"
   tags:
     - ssh_groups
 
