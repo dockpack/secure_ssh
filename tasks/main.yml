@@ -325,6 +325,8 @@
       line: "KexAlgorithms {{ KexAlgorithms }}"
     - regexp: '^(#)?MACs'
       line: "MACs {{ MACs }}"
+    - regexp: '^(#)?HostKeyAlgorithms'
+      line: "HostKeyAlgorithms {{ HostKeyAlgorithms }}"
   notify: restart sshd
   tags:
     - config
