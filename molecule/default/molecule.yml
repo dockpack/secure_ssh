@@ -15,6 +15,10 @@ platforms:
     box: centos/7
 provisioner:
   name: ansible
+  config_options:
+    defaults:
+      remote_tmp: /tmp
+      stdout_callback: yaml
   lint:
     name: ansible-lint
 verifier:
