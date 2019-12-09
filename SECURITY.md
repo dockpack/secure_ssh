@@ -3,24 +3,38 @@
 - Make sure you have enabled [Two-factor Authentication for GitHub](https://github.com/settings/security).
 - Enable [Signed Commits](https://help.github.com/en/articles/signing-commits) for Git.
 
-## Secure Shell
+## Better Secure Shell Key Pairs
 
-Generate a strong SSH keypair with a strong passphrase, and store the passphrase in your Keychain. This means that your SSH private key is safely secured in your Mac's Keychain, plus you will never need to type the passphrase.
+Generate a strong SSH keypair with a strong passphrase and bruteforce protection, and store the passphrase in your Keychain. This means that your SSH private key is safely secured in your Mac's Keychain, plus you will never need to type the passphrase. The -a 500 option adds 500 rounds of juggling which takes several seconds for each decryption attempt; no problem if you use the ssh-agent, but a huge problem for brute-forcing the passphrase!
+
 
 ```sh
-ssh-keygen -t rsa -b 4096
-ssh-agent bash
+ssh-keygen -a 500 -t ed25519 -C $USER
+
+### macOS
+
+```sh
 ssh-add -K
+```
+
+### Linux
+
+```sh
+eval $(ssh-agent bash)
+ssh-add
 ```
 
 Add a config file to the .ssh directory hidden in your home directory with the following content:
 
 ```text
-IgnoreUnknown UseKeychain
+HashKnownHosts yes
+UseKeychain yes
+XAuthLocation /opt/X11/bin/xauth
+
 Host *
   UseKeychain yes
   AddKeysToAgent yes
-  IdentityFile ~/.ssh/id_rsa
+  IdentityFile ~/.ssh/id_ed25519
 ```
 
 To do this open Terminal and enter:
