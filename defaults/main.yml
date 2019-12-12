@@ -33,7 +33,7 @@ ssh_groups:
   - chroot
   - sftp_users
 
-AllowGroups: wheel,sftp_users,chroot
+AllowGroups: wheel sftp_users chroot
 
 # adds all in 'ssh_users:' removes all 'non_users:'
 manage_ssh_users: false
