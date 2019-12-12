@@ -29,7 +29,7 @@
   tags:
     - authconfig
 
-- name: ensure xorg-x11-xauth is installed
+- name: ensure xorg-x11-xauth is absent
   when: X11Forwarding == 'no'
   package:
     name:
