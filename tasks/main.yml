@@ -369,6 +369,8 @@
       line: 'StrictModes yes'
     - regexp: '^(#)?HostKeyAlgorithms'
       line: "HostKeyAlgorithms {{ HostKeyAlgorithms }}"
+    - regexp: '^(#)?UsePrivilegeSeparation'
+      line: 'UsePrivilegeSeparation sandbox'
   notify: restart sshd
   tags:
     - config
