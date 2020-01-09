@@ -520,6 +520,16 @@
     - ssh_groups
 
 ###
+- name: create group sftp_users
+  when:
+    - chroot_sftp_users is defined
+    - chroot_sftp_users|bool
+    - sftp_users is defined
+  group:
+    system: true
+    name: sftp_users
+    state: present
+
 - name: ensure the people in sftp_users have a user created
   when:
     - chroot_sftp_users is defined
