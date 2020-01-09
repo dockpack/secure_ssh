@@ -31,7 +31,6 @@ ssh_groups:
   - users
   - staff
   - chroot
-  - sftp_users
 
 AllowGroups: wheel sftp_users chroot
 
