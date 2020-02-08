@@ -1,4 +1,6 @@
 # Hardened SSH
+[![Galaxy](https://img.shields.io/badge/galaxy-dockpack.secure__ssh-blue.svg?style=flat)](https://galaxy.ansible.com/dockpack/secure_ssh)
+![Build Status](https://api.travis-ci.com/dockpack/secure_ssh.svg)
 
 An Ansible role to harden SSH on Centos 7 with several options, like using a trusted CA.
 
