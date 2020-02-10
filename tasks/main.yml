@@ -1,5 +1,6 @@
 ---
 # tasks file for secure_ssh
+# yamllint disable rule:line-length
 
 - name: ensure firewalld is running
   service:
@@ -271,8 +272,7 @@
     - regexp: '^(#)?RhostsRSAAuthentication'
       line: "#RhostsRSAAuthentication no"
     - regexp: '^(#)?ChallengeResponseAuthentication'
-      line: |
-        ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
+      line: "ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}"
     - regexp: '^UsePAM'
       line: 'UsePAM yes'
     - regexp: '^(#)?AllowGroups'
