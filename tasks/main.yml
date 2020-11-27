@@ -1,6 +1,5 @@
 ---
 # tasks file for secure_ssh
-# yamllint disable rule:line-length
 
 - name: ensure firewalld is running
   service:
@@ -204,6 +203,9 @@
       line: "TrustedUserCAKeys /etc/ssh/{{ TrustedUserCAKeys }}"
     - regexp: '^(#)?RevokedKeys'
       line: "RevokedKeys /etc/ssh/revoked_keys"
+  notify: restart sshd
+  tags:
+    - signed_ssh_keys
 
 - name: display the legal banner before user logs in.
   copy:
@@ -272,7 +274,8 @@
     - regexp: '^(#)?RhostsRSAAuthentication'
       line: "#RhostsRSAAuthentication no"
     - regexp: '^(#)?ChallengeResponseAuthentication'
-      line: "ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}"
+      line: |
+        ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
     - regexp: '^UsePAM'
       line: 'UsePAM yes'
     - regexp: '^(#)?AllowGroups'
