@@ -271,8 +271,8 @@
       line: "GSSAPIAuthentication {{ GSSAPIAuthentication }}"
     - regexp: '^(#)?KerberosAuthentication'
       line: "KerberosAuthentication {{ KerberosAuthentication }}"
-    - regexp: '^(#)?RhostsRSAAuthentication'
-      line: "#RhostsRSAAuthentication no"
+    - regexp: 'RhostsRSAAuthentication'
+      line: "#"
     - regexp: '^(#)?ChallengeResponseAuthentication'
       line: |
         ChallengeResponseAuthentication {{ ChallengeResponseAuthentication }}
