@@ -1,0 +1,8 @@
+---
+- name: Cleanup
+  hosts: all
+  become: true
+
+  tasks:
+    - name: reset immutable bits
+      shell: chattr -i /etc/ssh/authorized_keys/*

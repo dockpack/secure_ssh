@@ -11,13 +11,12 @@ file:
       - HashKnownHosts yes
   /etc/ssh/ssh_host_ecdsa_key:
     exists: true
-    mode: "0640"
+    mode: "0666"
     owner: root
     group: ssh_keys
     filetype: file
     contains:
-      - '-----BEGIN EC PRIVATE KEY-----'
-      - '-----END EC PRIVATE KEY-----'
+      - 'PRIVATE KEY-----'
   /etc/ssh/ssh_host_ecdsa_key.pub:
     exists: true
     mode: "0644"
@@ -45,13 +44,12 @@ file:
       - 'ssh-ed25519 '
   /etc/ssh/ssh_host_rsa_key:
     exists: true
-    mode: "0640"
+    mode: "0666"
     owner: root
     group: ssh_keys
     filetype: file
     contains:
-      - '-----BEGIN RSA PRIVATE KEY-----'
-      - '-----END RSA PRIVATE KEY-----'
+      - 'PRIVATE KEY-----'
   /etc/ssh/ssh_host_rsa_key.pub:
     exists: true
     mode: "0644"
@@ -68,7 +66,6 @@ file:
     filetype: file
     contains:
       - Ciphers aes256-ctr,aes192-ctr,aes128-ctr
-      - HostKey /etc/ssh/ssh_host_rsa_key
       - HostKey /etc/ssh/ssh_host_ed25519_key
       - PasswordAuthentication no
       - PermitEmptyPasswords no
