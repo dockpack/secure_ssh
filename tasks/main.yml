@@ -1,7 +1,13 @@
 ---
 # tasks file for secure_ssh
 
+- name: firewalld_status check
+  set_fact:
+    firewalld_status: "{{ ansible_facts.services['firewalld.service']['state'] }}"
+  when: ansible_facts.services['firewalld.service'] is defined
+
 - name: ensure firewalld is running
+  when: firewalld_status is defined
   service:
     name: firewalld
     state: started
@@ -13,7 +19,9 @@
   package:
     name:
       - authconfig
-      - policycoreutils-python
+      - openssh-clients
+      - openssh-server
+      - e2fsprogs  # for chattr
       - unzip
       - xorg-x11-xauth
     state: present
@@ -39,7 +47,9 @@
     - authconfig
 
 - name: firewalld configuration ssh
-  when: secure_ssh_dropzone|bool
+  when:
+    - firewalld_status is defined
+    - secure_ssh_dropzone|bool
   firewalld:
     zone: drop
     service: ssh
@@ -50,7 +60,9 @@
     - firewall
 
 - name: set default zone to drop
-  when: secure_ssh_dropzone|bool
+  when:
+    - firewalld_status is defined
+    - secure_ssh_dropzone|bool
   lineinfile:
     path: /etc/firewalld/firewalld.conf
     regexp: '^DefaultZone'
@@ -61,7 +73,9 @@
     - firewall
 
 - name: firewall the ports
-  when: "item is defined and item != 22"
+  when:
+    - firewalld_status is defined
+    - "item is defined and item != 22"
   firewalld:
     port: '{{ item }}/tcp'
     permanent: true
@@ -72,7 +86,10 @@
     - "{{ secure_high_port }}"
 
 - name: Change the ports in SELinux
-  when: "item is defined and item != '22'"
+  when:
+    - firewalld_status is defined
+    - "item is defined and item != '22'"
+    - ansible_facts.selinux.status in [ "enforcing", "permissive" ]
   seport:
     ports: "{{ item }}"
     proto: "tcp"
@@ -237,24 +254,6 @@
     mode: 0644
   tags:
     - banner
-
-- name: Relax SSH keys location, managed by user
-  when: distribute_ssh_keys is not defined or not distribute_ssh_keys
-  lineinfile:
-    dest: /etc/ssh/sshd_config
-    regexp: '^(#)?AuthorizedKeysFile'
-    line: "#AuthorizedKeysFile"
-    state: present
-  notify: restart sshd
-
-- name: Harden SSH keys location, managed by root
-  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
-  lineinfile:
-    dest: /etc/ssh/sshd_config
-    regexp: '^(#)?AuthorizedKeysFile'
-    line: "AuthorizedKeysFile {{ AuthorizedKeysFile }}"
-    state: present
-  notify: restart sshd
 
 - name: Harden SSH configuration
   lineinfile:
@@ -441,6 +440,37 @@
   tags:
     - skip_ansible_lint
 
+- name: check the ed25519 host key
+  stat:
+    path: /etc/ssh/ssh_host_ed25519_key
+  register: ed25519
+
+- name: generate ed25519 host key
+  command: ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
+  when:
+    - not ed25519.stat.exists|bool
+  notify: restart sshd
+  changed_when: true
+
+- name: set permissions
+  file:
+    path: /etc/ssh/ssh_host_ed25519_key
+    group: ssh_keys
+    mode: 0640
+
+- name: configure ed25519 host key
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^HostKey /etc/ssh/ssh_host_ed25519_key'
+    line: 'HostKey /etc/ssh/ssh_host_ed25519_key'
+    insertbefore: '^# HostKey /etc/ssh/ssh_host_rsa_key'
+    state: present
+  notify: restart sshd
+
+- name: disable weak host keys
+  include_tasks: weak_keys.yml
+  loop: "{{ weak_host_keys }}"
+
 - name: create .ssh in user skeleton
   file:
     path: /etc/skel/.ssh
@@ -556,6 +586,7 @@
     - chroot_sftp_users is defined
     - chroot_sftp_users|bool
     - sftp_users is defined
+
   command: "semanage login -a -s {{ item.seuser | default('guest_u') }} {{ item }}"
   with_items: "{{ sftp_users }}"
   register: sftp_seuser
@@ -619,7 +650,6 @@
     name: "{{ item.username }}"
     uid: "{{ item.uid | default(omit) }}"
     group: "{{ item.group | default('users') }}"
-    seuser: "{{ item.seuser | default('user_u') }}"
     comment: "{{ item.comment | default(omit) }}"
     create_home: "{{ item.create_home | default('true') }}"
     move_home: "{{ item.move_home | default(omit) }}"
@@ -638,6 +668,7 @@
 
 - name: ensure the people in ssh_users have a seuser type
   when:
+    - ansible_facts.selinux.status in [ "enforcing", "permissive" ]
     - semanage_ssh_users is defined and semanage_ssh_users|bool
     - ssh_users is defined
   command: "semanage login -a -s {{ item.seuser | default('xguest_u') }} {{ item.username }}"
@@ -647,7 +678,7 @@
   tags:
     - ssh_users
 
-- name: set the primary group for users
+- name: set the primary group for ssh_users
   when:
     - manage_ssh_groups is defined and manage_ssh_groups|bool
     - ssh_users is defined
@@ -660,7 +691,7 @@
     - ssh_groups
     - ssh_users
 
-- name: remove users from all groups except their primary group
+- name: remove ssh_users from all groups except their primary group
   when:
     - manage_ssh_groups is defined and manage_ssh_groups|bool
     - ssh_users is defined
@@ -672,7 +703,7 @@
     - ssh_groups
     - ssh_users
 
-- name: remove user private groups
+- name: remove ssh_users private groups
   when:
     - manage_ssh_groups is defined and manage_ssh_groups|bool
     - ssh_users is defined
@@ -696,7 +727,7 @@
     owner: "{{ item.username }}"
     mode: 0640
   ignore_errors: true
-  no_log: true
+  no_log: false
   with_items:
     - "{{ ssh_users }}"
   tags:
@@ -751,6 +782,24 @@
   tags:
     - nologin_users
 
+- name: Relax SSH keys location, managed by user
+  when: distribute_ssh_keys is not defined or not distribute_ssh_keys
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^(#)?AuthorizedKeysFile'
+    line: "#AuthorizedKeysFile"
+    state: present
+  notify: restart sshd
+
+- name: Harden SSH keys location, managed by root
+  when: distribute_ssh_keys is defined and distribute_ssh_keys|bool
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^(#)?AuthorizedKeysFile'
+    line: "AuthorizedKeysFile {{ AuthorizedKeysFile }}"
+    state: present
+  notify: restart sshd
+
 ## TODO Hashicorp Vault
 - name: download vault-ssh-helper from the internet
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
@@ -778,12 +827,14 @@
   file:
     path: "/etc/vault-ssh-helper.d"
     state: directory
+    mode: 0750
 
 - name: copy vault-ssh-helper configuration file
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
   template:
     src: config.hcl
     dest: /etc/vault-ssh-helper.d/config.hcl
+    mode: 0640
 
 - name: Comment common-auth mechanism
   when: hashicorp_vault_ssh is defined and hashicorp_vault_ssh|bool
