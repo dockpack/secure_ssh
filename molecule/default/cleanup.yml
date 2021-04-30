@@ -4,5 +4,14 @@
   become: true
 
   tasks:
+
+    - name: ensure role dependencies are installed
+      package:
+        name:
+          - e2fsprogs  # for chattr
+        state: present
+
     - name: reset immutable bits
       shell: chattr -i /etc/ssh/authorized_keys/*
+      changed_when: true
+      ignore_errors: true
