@@ -11,6 +11,7 @@
         name:
           - e2fsprogs  # for chattr
         state: present
+      ignore_errors: true
 
     - name: reset immutable bits
       shell: chattr -i /etc/ssh/authorized_keys/*
