@@ -114,6 +114,10 @@ KexAlgorithms: curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie
 # umac-128-etm@openssh.com is not FIPS 140-2 compliant, but needed for compatibility.
 MACs: hmac-sha2-512-etm@openssh.com,hmac-sha2-512,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com
 
+weak_host_keys:
+  - ssh_host_rsa_key
+  - ssh_host_ecdsa_key
+
 # Skip IPv6
 AddressFamily: inet
 
