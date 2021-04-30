@@ -1,0 +1,23 @@
+---
+
+- name: configure ed25519 host key
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: 'HostKey /etc/ssh/{{ item }}'
+    line: 'HostKey /etc/ssh/{{ item }}'
+    state: absent
+  notify: restart sshd
+
+- name: "check weak key presence for {{ item }}"
+  stat:
+    path: "/etc/ssh/{{ item }}"
+  register:
+    weak_key_found
+
+- name: "disable weak host key {{ item }}"
+  when:
+    - weak_key_found.stat.exists is defined
+    - weak_key_found.stat.exists|bool
+  file:
+    path: "/etc/ssh/{{ item }}"
+    mode: 0666
