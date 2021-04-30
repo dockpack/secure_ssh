@@ -29,15 +29,18 @@
       copy:
         src: "{{ item }}"
         dest: "{{ goss_test_directory }}/{{ item | basename }}"
+        mode: 0644
       with_fileglob:
         - "{{ lookup('env', 'MOLECULE_VERIFIER_TEST_DIRECTORY') }}/test_*.yml"
 
     - name: Register test files
       shell: "ls {{ goss_test_directory }}/test_*.yml"
+      changed_when: false
       register: test_files
 
     - name: Execute Goss tests
       command: "{{ goss_dst }} -g {{ item }} validate --format {{ goss_format }}"
+      changed_when: false
       register: test_results
       with_items: "{{ test_files.stdout_lines }}"
 
@@ -61,9 +64,10 @@
       git:
         repo: "https://github.com/arthepsy/ssh-audit.git"
         dest: 'ssh-audit'
+        version: master
 
     - name: Audit SSH
-      command: "ssh-audit/ssh-audit.py 10.0.2.15"
+      command: "ssh-audit/ssh-audit.py localhost"
       register: ssh_audit
       changed_when: false
 
