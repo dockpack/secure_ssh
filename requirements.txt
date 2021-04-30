@@ -1,1 +1,3 @@
-molecule[vagrant]
+ansible==2.9.20
+ansible-lint==4.3.7
+molecule[docker]==3.2.3
