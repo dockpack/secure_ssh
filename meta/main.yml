@@ -1,6 +1,8 @@
 ---
 
 galaxy_info:
+  role_name: secure_ssh
+  namespace: dockpack
   author: Bas Meijer
   description: Hardened SSH for Centos 7
   company: dockpack
