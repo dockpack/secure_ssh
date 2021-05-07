@@ -569,7 +569,6 @@
     - chroot_sftp_users is defined
     - chroot_sftp_users|bool
     - sftp_users is defined
-
   command: "semanage login -a -s {{ item.seuser | default('guest_u') }} {{ item }}"
   with_items: "{{ sftp_users }}"
   register: sftp_seuser
