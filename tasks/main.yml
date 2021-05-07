@@ -599,9 +599,25 @@
     - sftp_users is defined
   file:
     name: "/home/{{ item }}"
-    owner: "{{ item }}"
-    group: root
-    mode: 0500
+    owner: root
+    group: sftp_users
+    mode: 0751
+    state: directory
+  with_items:
+    - "{{ sftp_users }}"
+  tags:
+    - sftp_users
+
+- name: ensure the people in sftp_users have a downloads folder
+  when:
+    - chroot_sftp_users is defined
+    - chroot_sftp_users|bool
+    - sftp_users is defined
+  file:
+    name: "/home/{{ item }}/downloads"
+    owner: "{{ main_user | default('root', true) }}"
+    group: sftp_users
+    mode: 0750
     state: directory
   with_items:
     - "{{ sftp_users }}"
