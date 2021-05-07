@@ -92,7 +92,7 @@
   when:
     - firewalld_status is defined
     - "item is defined and item != '22'"
-    - ansible_facts.selinux.status in [ "enforcing", "permissive" ]
+    - ansible_facts.selinux.status == 'enabled'
   seport:
     ports: "{{ item }}"
     proto: "tcp"
@@ -669,7 +669,7 @@
 
 - name: ensure the people in ssh_users have a seuser type
   when:
-    - ansible_facts.selinux.status in [ "enforcing", "permissive" ]
+    - ansible_facts.selinux.status == 'enabled'
     - semanage_ssh_users is defined and semanage_ssh_users|bool
     - ssh_users is defined
   command: "semanage login -a -s {{ item.seuser | default('xguest_u') }} {{ item.username }}"
