@@ -378,25 +378,11 @@
     - config
 
 - name: Replace SFTP server subsystem
-  when: chroot_sftp_group|bool
+  when: chroot_sftp_users|bool
   replace:
     dest: /etc/ssh/sshd_config
     regexp: '.*Subsystem.*sftp.*/usr/libexec/openssh/sftp-server$'
     replace: 'Subsystem       sftp    internal-sftp'
-  notify: restart sshd
-
-- name: Configure chroot group
-  when: chroot_sftp_group|bool
-  blockinfile:
-    marker: '# {mark} ANSIBLE MANAGED chroot_sftp_group'
-    path: /etc/ssh/sshd_config
-    insertafter: EOF
-    block: |
-      Match group chroot
-        ChrootDirectory /home/
-        X11Forwarding no
-        AllowTcpForwarding no
-        ForceCommand internal-sftp
   notify: restart sshd
 
 - name: Configure chroot group

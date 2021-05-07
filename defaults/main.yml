@@ -16,9 +16,6 @@ AuthorizedKeysFile: '/etc/ssh/authorized_keys/%u'
 # Change from user private groups to 'ssh_groups:'
 manage_ssh_groups: false
 
-## Pick one of these two, or none
-# Run a sftp server with a chroot group
-chroot_sftp_group: false
 # Run a sftp server with chrooted users
 chroot_sftp_users: false
 
