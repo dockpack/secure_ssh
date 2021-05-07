@@ -392,15 +392,12 @@
     path: /etc/ssh/sshd_config
     insertafter: EOF
     block: |
-      Match user {{ item }}
-        ChrootDirectory /home/{{ item }}
+      Match group sftp_users
+        ChrootDirectory /home/%u
         X11Forwarding no
         AllowTcpForwarding no
         ForceCommand internal-sftp
-  with_items: "{{ sftp_users }}"
   notify: restart sshd
-  tags:
-    - sftp_users
 
 - name: ensure permissions on /etc/ssh/sshd_config are restricted
   file:
