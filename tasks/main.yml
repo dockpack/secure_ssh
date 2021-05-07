@@ -1,6 +1,9 @@
 ---
 # tasks file for secure_ssh
 
+- name: get service facts
+  service_facts:
+
 - name: firewalld_status check
   set_fact:
     firewalld_status: "{{ ansible_facts.services['firewalld.service']['state'] }}"
