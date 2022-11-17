@@ -1,9 +1,9 @@
 ---
 
 - src: https://github.com/dockpack/base_epel.git
-  name: dockpack.base_epel
+  name: base_epel
   version: master
 
 - src: https://github.com/dockpack/base_common.git
-  name: dockpack.base_common
+  name: base_common
   version: master
