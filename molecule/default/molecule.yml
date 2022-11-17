@@ -9,10 +9,13 @@ lint: |
   ansible-lint
 platforms:
   - name: base-ssh-centos7
-    image: centos:7
+    image: centos:7.9.2009
     command: /sbin/init
     capabilities:
       - LINUX_IMMUTABLE
+      - NET_BIND_SERVICE
+    published_ports:
+      - 127.0.0.1:2222:22
     tmpfs:
       - /run
       - /tmp

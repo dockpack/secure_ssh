@@ -808,7 +808,7 @@
   become: false
   get_url:
     url: "{{ vault_helper_url }}"
-    sha256sum: "{{ vault_helper_sha256sum }}"
+    checksum: "sha256:{{ vault_helper_sha256sum }}"
     dest: "/tmp/{{ vault_helper_zip }}"
     timeout: 30
   register: task_result
