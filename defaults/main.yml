@@ -1,4 +1,5 @@
 ---
+# yamllint disable rule:line-length
 secure_ssh_optional: false
 secure_ssh_fail2ban: false
 secure_ssh_dropzone: true
